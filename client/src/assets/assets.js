@@ -65,7 +65,7 @@ export const dummyStoriesData = [
         "media_url": "",
         "media_type": "text",
         "background_color": "#4f46e5",
-        "createdAt": "2025-07-25T08:16:06.958Z",
+        "createdAt": "2025-07-26T02:06:06.958Z",
         "updatedAt": "2025-07-25T08:16:06.958Z",
     },
     {
@@ -75,7 +75,7 @@ export const dummyStoriesData = [
         "media_url": "https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg",
         "media_type": "image",
         "background_color": "#4f46e5",
-        "createdAt": "2025-07-25T08:27:48.134Z",
+        "createdAt": "2025-07-24T08:27:48.134Z",
         "updatedAt": "2025-07-25T08:27:48.134Z",
     },
     {
