@@ -71,7 +71,7 @@ export const sendMessage = async (req, res) => {
         const messageWithUserData = await Message.findById(message._id).populate('from_user_id');
 
         if(connections[to_user_id]){
-           connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`)
+            connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`)
         }
 
     } catch (error) {

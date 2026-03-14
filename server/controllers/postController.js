@@ -16,7 +16,7 @@ export const addPost = async (req, res) => {
             image_urls = await Promise.all(
                 images.map(async (image) => {
                     const fileBuffer = fs.readFileSync(image.path)
-                     const response = await imagekit.upload({
+                    const response = await imagekit.upload({
                             file: fileBuffer,
                             fileName: image.originalname,
                             folder: "posts",
