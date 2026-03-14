@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { assets, dummyPostsData } from '../assets/assets'
+import { assets } from '../assets/assets'
 import Loading from '../components/Loading'
 import StoriesBar from '../components/StoriesBar'
 import PostCard from '../components/PostCard'
@@ -12,38 +12,64 @@ const Feed = () => {
 
   const [feeds, setFeeds] = useState([])
   const [loading, setLoading] = useState(true)
-  const {getToken} = useAuth()
-
+  const { getToken } = useAuth()
 
   const fetchFeeds = async () => {
     try {
       setLoading(true)
-      const {data} = await api.get('/api/post/feed', {headers: { Authorization: `Bearer ${await getToken()}` }})
 
-      if (data.success){
+      const token = await getToken()
+
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      const { data } = await api.get('/api/post/feed', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (data.success) {
         setFeeds(data.posts)
-      }else{
+      } else {
         toast.error(data.message)
       }
+
     } catch (error) {
+      console.error("Feed error:", error)
       toast.error(error.message)
     }
+
     setLoading(false)
   }
 
-  useEffect(()=>{
-    fetchFeeds()
-  },[])
+useEffect(() => {
+  const loadFeeds = async () => {
+    await fetchFeeds()
+  }
 
-  return !loading ? (
+  loadFeeds()
+}, [getToken])
+
+  if (loading) {
+    return <Loading />
+  }
+
+  return (
     <div className='h-full overflow-y-scroll no-scrollbar py-10 xl:pr-5 flex items-start justify-center xl:gap-8'>
+
       {/* Stories and post list */}
       <div>
         <StoriesBar />
+
         <div className='p-4 space-y-6'>
-          {feeds.map((post)=>(
-            <PostCard key={post._id} post={post}/>
-          ))}
+          {feeds.length > 0 ? (
+            feeds.map((post) => (
+              <PostCard key={post._id} post={post} />
+            ))
+          ) : (
+            <p className="text-gray-500 text-center">No posts yet</p>
+          )}
         </div>
       </div>
 
@@ -53,12 +79,16 @@ const Feed = () => {
           <h3 className='text-slate-800 font-semibold'>Sponsored</h3>
           <img src={assets.sponsored_img} className='w-75 h-50 rounded-md' alt="" />
           <p className='text-slate-600'>Email marketing</p>
-          <p className='text-slate-400'>Supercharge your marketing with a powerful, easy-to-use platform built for results.</p>
+          <p className='text-slate-400'>
+            Supercharge your marketing with a powerful, easy-to-use platform built for results.
+          </p>
         </div>
+
         <RecentMessages />
       </div>
+
     </div>
-  ) : <Loading />
+  )
 }
 
 export default Feed
