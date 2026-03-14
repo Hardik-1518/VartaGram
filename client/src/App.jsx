@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import Login from './pages/Login'
 import Feed from './pages/Feed'
@@ -8,122 +8,102 @@ import Connections from './pages/Connections'
 import Discover from './pages/Discover'
 import Profile from './pages/Profile'
 import CreatePost from './pages/CreatePost'
-import { useUser, useAuth } from '@clerk/react'
+import {useUser, useAuth} from '@clerk/react'
 import Layout from './pages/Layout'
-import toast, { Toaster } from 'react-hot-toast'
+import toast, {Toaster} from 'react-hot-toast'
+import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { fetchUser } from './features/user/userSlice'
 import { fetchConnections } from './features/connections/connectionsSlice'
 import { addMessage } from './features/messages/messagesSlice'
 import Notification from './components/Notification'
-import Loading from './components/Loading'
 
 const App = () => {
-
   const { user, isLoaded } = useUser()
-  const { getToken } = useAuth()
-  const { pathname } = useLocation()
+  const {getToken } = useAuth()
+  const {pathname} = useLocation()
   const pathnameRef = useRef(pathname)
 
   const dispatch = useDispatch()
 
-  /* ---------- LOAD USER DATA ---------- */
-
   useEffect(() => {
 
-    if (!isLoaded || !user) return
+  if (!isLoaded || !user) return
 
-    const loadUser = async () => {
+  const fetchData = async () => {
+    try {
 
-      try {
+      const token = await getToken()
 
-        const token = await getToken()
+      if (!token) return
 
-        if (!token) return
+      await dispatch(fetchUser(token))
+      await dispatch(fetchConnections(token))
 
-        await dispatch(fetchUser(token))
-        await dispatch(fetchConnections(token))
-
-      } catch (error) {
-        console.error("App fetch error:", error)
-      }
-
+    } catch (error) {
+      console.error("App fetch error:", error)
     }
+  }
 
-    loadUser()
+  fetchData()
 
-  }, [user, isLoaded])
+}, [user, isLoaded, getToken, dispatch])
 
-  /* ---------- TRACK CURRENT PATH ---------- */
-
-  useEffect(() => {
+  useEffect(()=>{
     pathnameRef.current = pathname
-  }, [pathname])
-
-  /* ---------- REALTIME MESSAGE SSE ---------- */
+  },[pathname])
 
   useEffect(() => {
+  if (!user || !import.meta.env.VITE_BASEURL) return
 
-    if (!user || !import.meta.env.VITE_BASEURL) return
+  let eventSource
 
-    const eventSource = new EventSource(
+  try {
+    eventSource = new EventSource(
       `${import.meta.env.VITE_BASEURL}/api/message/${user.id}`
     )
 
     eventSource.onmessage = (event) => {
-
       const message = JSON.parse(event.data)
 
       if (pathnameRef.current === `/messages/${message.from_user_id._id}`) {
-
         dispatch(addMessage(message))
-
       } else {
-
         toast.custom(
           (t) => <Notification t={t} message={message} />,
           { position: "bottom-right" }
         )
-
       }
-
     }
 
     eventSource.onerror = () => {
       eventSource.close()
     }
 
-    return () => {
-      eventSource.close()
-    }
-
-  }, [user])
-
-  /* ---------- WAIT UNTIL CLERK LOADS ---------- */
-
-  if (!isLoaded) {
-    return <Loading />
+  } catch (error) {
+    console.error("EventSource error:", error)
   }
 
+  return () => {
+    if (eventSource) eventSource.close()
+  }
+
+}, [user, dispatch])
+  
   return (
     <>
       <Toaster />
-
       <Routes>
-
-        <Route path='/' element={!user ? <Login /> : <Layout />}>
-
-          <Route index element={<Feed />} />
-          <Route path='messages' element={<Messages />} />
-          <Route path='messages/:userId' element={<ChatBox />} />
-          <Route path='connections' element={<Connections />} />
-          <Route path='discover' element={<Discover />} />
-          <Route path='profile' element={<Profile />} />
-          <Route path='profile/:profileId' element={<Profile />} />
-          <Route path='create-post' element={<CreatePost />} />
-
+        <Route path='/' element={ !user ? <Login /> : <Layout/>}>
+          <Route index element={<Feed/>}/>
+          <Route path='messages' element={<Messages/>}/>
+          <Route path='messages/:userId' element={<ChatBox/>}/>
+          <Route path='connections' element={<Connections/>}/>
+          <Route path='discover' element={<Discover/>}/>
+          <Route path='profile' element={<Profile/>}/>
+          <Route path='profile/:profileId' element={<Profile/>}/>
+          <Route path='create-post' element={<CreatePost/>}/>
         </Route>
-
       </Routes>
     </>
   )
