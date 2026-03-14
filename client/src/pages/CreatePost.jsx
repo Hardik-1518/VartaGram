@@ -18,7 +18,7 @@ const CreatePost = () => {
 
   const  { getToken } = useAuth()
   
- const handleSubmit = async () => {
+  const handleSubmit = async () => {
   if(!images.length && !content){
     return toast.error('Please add at least one image or text')
   }
