@@ -26,42 +26,66 @@ const App = () => {
 
   const dispatch = useDispatch()
 
-  useEffect(()=>{
-    const fetchData = async () => {
-      if(user){
-      const token = await getToken()
-      dispatch(fetchUser(token))
-      dispatch(fetchConnections(token))
+  useEffect(() => {
+  const fetchData = async () => {
+    try {
+      if (user) {
+        const token = await getToken()
+
+        if (!token) return
+
+        await dispatch(fetchUser(token))
+        await dispatch(fetchConnections(token))
       }
+    } catch (error) {
+      console.error("App fetch error:", error)
     }
-    fetchData()
-    
-  },[user, getToken, dispatch])
+  }
+
+  fetchData()
+
+}, [user, getToken, dispatch])
 
   useEffect(()=>{
     pathnameRef.current = pathname
   },[pathname])
 
-  useEffect(()=>{
-    if(user){
-      const eventSource = new EventSource(import.meta.env.VITE_BASEURL + '/api/message/' + user.id);
+  useEffect(() => {
+  if (!user || !import.meta.env.VITE_BASEURL) return
 
-      eventSource.onmessage = (event)=>{
-        const message = JSON.parse(event.data)
+  let eventSource
 
-        if(pathnameRef.current === ('/messages/' + message.from_user_id._id)){
-          dispatch(addMessage(message))
-        }else{
-          toast.custom((t)=>(
-            <Notification t={t} message={message}/>
-          ), {position: "bottom-right"})
-        }
-      }
-      return ()=>{
-        eventSource.close()
+  try {
+    eventSource = new EventSource(
+      `${import.meta.env.VITE_BASEURL}/api/message/${user.id}`
+    )
+
+    eventSource.onmessage = (event) => {
+      const message = JSON.parse(event.data)
+
+      if (pathnameRef.current === `/messages/${message.from_user_id._id}`) {
+        dispatch(addMessage(message))
+      } else {
+        toast.custom(
+          (t) => <Notification t={t} message={message} />,
+          { position: "bottom-right" }
+        )
       }
     }
-  },[user, dispatch])
+
+    eventSource.onerror = () => {
+      eventSource.close()
+    }
+
+  } catch (error) {
+    console.error("EventSource error:", error)
+  }
+
+  return () => {
+    if (eventSource) eventSource.close()
+  }
+
+}, [user, dispatch])
   
   return (
     <>
