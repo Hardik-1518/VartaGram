@@ -56,7 +56,6 @@ export const addPost = async (req, res) => {
 
     }
 }
-
 // Get Posts
 export const getFeedPosts = async (req, res) =>{
     try {
