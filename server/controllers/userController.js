@@ -9,17 +9,34 @@ import { clerkClient } from "@clerk/express";
 
 // Get User Data using userId
 export const getUserData = async (req, res) => {
-    try {
-        const { userId } = req.auth()
-        const user = await User.findById(userId)
-        if(!user){
-            return res.json({success: false, message: "User not found"})
-        }
-        res.json({success: true, user})
-    } catch (error) {
-        console.log(error);
-        res.json({success: false, message: error.message})
+  try {
+
+    const { userId } = req.auth()
+
+    let user = await User.findById(userId)
+
+    // create user if not exists
+    if (!user) {
+
+      const clerkUser = await clerkClient.users.getUser(userId)
+
+      user = await User.create({
+        _id: userId,
+        email: clerkUser.emailAddresses[0].emailAddress,
+        full_name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`,
+        username: clerkUser.username || clerkUser.firstName || "user"
+      })
+
     }
+
+    res.json({ success: true, user })
+
+  } catch (error) {
+
+    console.log(error)
+    res.json({ success: false, message: error.message })
+
+  }
 }
 
 //  Update User Data
