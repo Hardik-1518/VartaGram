@@ -6,31 +6,36 @@ import User from "../models/User.js";
 // Add Post
 export const addPost = async (req, res) => {
     try {
-        const { userId } = req.auth();
-        const { content, post_type } = req.body;
-        const images = req.files
+
+        const { userId } = req.auth()
+        const { content, post_type } = req.body
+
+        const images = req.files || []   // ✅ important fix
 
         let image_urls = []
 
-        if(images.length){
+        if (images.length > 0) {
             image_urls = await Promise.all(
                 images.map(async (image) => {
-                    const fileBuffer = fs.readFileSync(image.path)
-                    const response = await imagekit.upload({
-                            file: fileBuffer,
-                            fileName: image.originalname,
-                            folder: "posts",
-                        })
 
-                        const url = imagekit.url({
-                            path: response.filePath,
-                            transformation: [
-                                {quality: 'auto'},
-                                { format: 'webp' },
-                                { width: '1280' }
-                            ]
-                        })
-                        return url
+                    const fileBuffer = fs.readFileSync(image.path)
+
+                    const response = await imagekit.upload({
+                        file: fileBuffer,
+                        fileName: image.originalname,
+                        folder: "posts"
+                    })
+
+                    const url = imagekit.url({
+                        path: response.filePath,
+                        transformation: [
+                            { quality: "auto" },
+                            { format: "webp" },
+                            { width: "1280" }
+                        ]
+                    })
+
+                    return url
                 })
             )
         }
@@ -41,10 +46,14 @@ export const addPost = async (req, res) => {
             image_urls,
             post_type
         })
-        res.json({ success: true, message: "Post created successfully" });
+
+        res.json({ success: true, message: "Post created successfully" })
+
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
+
+        console.log(error)
+        res.json({ success: false, message: error.message })
+
     }
 }
 
