@@ -24,8 +24,17 @@ export const getUserData = async (req, res) => {
         _id: userId,
         email: clerkUser.emailAddresses[0].emailAddress,
         full_name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`,
-        username: clerkUser.username || clerkUser.firstName || "user"
-      })
+        username: clerkUser.username || clerkUser.firstName || "user",
+        connections: ["ai_user"]   // auto connect with AI
+    })
+    
+    // also add this user to AI user's connections
+    await User.findByIdAndUpdate(
+        "ai_user",
+        {
+            $addToSet: { connections: userId }
+        }
+    )
 
     }
 

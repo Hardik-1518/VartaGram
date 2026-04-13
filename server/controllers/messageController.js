@@ -1,6 +1,7 @@
 import fs from "fs";
 import imagekit from "../configs/imageKit.js";
 import Message from "../models/Message.js";
+import groq from "../configs/groq.js";
 
 // Create an empty object to store SS Event connections
 const connections = {}; 
@@ -73,7 +74,52 @@ export const sendMessage = async (req, res) => {
         if(connections[to_user_id]){
             connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`)
         }
+        
+        if (to_user_id === "ai_user" && text) {
 
+  let reply;
+
+  try {
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "You are Varta AI inside a social media platform. Help users with captions, questions and conversations."
+        },
+        {
+          role: "user",
+          content: text
+        }
+      ],
+      model: "llama-3.1-8b-instant"
+    });
+
+    reply = chatCompletion.choices[0].message.content;
+
+  } catch (error) {
+
+    console.log("Groq error:", error.message);
+    reply = "Hi! I am Varta AI 🤖. AI service is temporarily unavailable.";
+
+  }
+
+  const aiMessage = await Message.create({
+    from_user_id: "ai_user",
+    to_user_id: userId,
+    text: reply,
+    message_type: "text"
+  });
+
+  const messageWithUserData = await Message
+    .findById(aiMessage._id)
+    .populate("from_user_id");
+
+  if (connections[userId]) {
+    connections[userId].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
+  }
+
+}
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
