@@ -39,7 +39,12 @@ export const updateUser = createAsyncThunk(
       const { data } = await api.post(
         '/api/user/update',
         userData,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"   // 🔥 ADD THIS
+          }
+        }
       )
 
       if (data.success) {
