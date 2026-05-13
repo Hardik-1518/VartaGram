@@ -137,7 +137,7 @@ Install the following before starting:
 ## 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/VartaGram.git
+git clone <repository-url >
 cd VartaGram
 ```
 
