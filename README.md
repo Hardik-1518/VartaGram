@@ -52,16 +52,16 @@ Built using the MERN stack and modern web technologies, the platform combines so
 # 📸 Screenshots
 
 ## Home Feed
-_Add screenshot here_
+![Home](<Screenshot 2026-04-30 145634.png>)
 
 ## Real-Time Messaging
-_Add screenshot here_
+![Message](<Screenshot 2026-03-15 163318.png>)
 
 ## AI Chatbot
-_Add screenshot here_
+![VartaAI](<Screenshot 2026-04-30 150835.png>)
 
 ## User Profile
-_Add screenshot here_
+![User](<Screenshot 2026-04-30 145948.png>)
 
 ---
 
@@ -271,9 +271,7 @@ npm run build
 ```
 
 ## Backend Deployment
-- Render
-- Railway
-- VPS
+- Vercel
 
 ---
 
@@ -291,10 +289,9 @@ npm run build
 # 👨‍💻 Author
 
 ## Hardik Srivastava
-
-- B.Tech CSE Student
-- Full Stack Developer
-- Game Developer
+## Ankit Kumar Tiwari
+## Vaibhav Baishkhiyar
+## Shikhar Gupta
 
 ---
 
@@ -324,10 +321,10 @@ If you like this project, give it a ⭐ on GitHub!
 
 # 📬 Contact
 
-📧 your-email@example.com
+📧 hardiksatwik2004.com
 
 ---
 
 # 🎉 Thank You
 
-## VartaGram — Connect. Converse. Create.
+## VartaGram — Connect. Share. Varta.
