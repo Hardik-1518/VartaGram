@@ -64,12 +64,68 @@ export const getFeedPosts = async (req, res) =>{
 
         // User connections and followings 
         const userIds = [userId, ...user.connections, ...user.following]
-        const posts = await Post.find({user: {$in: userIds}}).populate('user').sort({createdAt: -1});
+        const posts = await Post.find({user: {$in: userIds}})
+            .populate('user')
+            .populate({ path: 'comments.user', select: 'full_name username profile_picture' })
+            .sort({createdAt: -1});
 
         res.json({ success: true, posts})
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
+    }
+}
+
+// Add comment
+export const addComment = async (req, res) => {
+    try {
+        const { userId } = req.auth()
+        const { postId, text } = req.body
+
+        if (!text || !text.trim()) {
+            return res.json({ success: false, message: 'Comment cannot be empty' })
+        }
+
+        const post = await Post.findById(postId)
+        if (!post) {
+            return res.json({ success: false, message: 'Post not found' })
+        }
+
+        post.comments.push({ user: userId, text: text.trim() })
+        await post.save()
+        await post.populate({ path: 'comments.user', select: 'full_name username profile_picture' })
+
+        const newComment = post.comments[post.comments.length - 1]
+
+        res.json({ success: true, message: 'Comment added', comment: newComment })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Share Post
+export const sharePost = async (req, res) => {
+    try {
+        const { userId } = req.auth()
+        const { postId } = req.body
+
+        const post = await Post.findById(postId)
+        if (!post) {
+            return res.json({ success: false, message: 'Post not found' })
+        }
+
+        if (post.share_count.includes(userId)) {
+            return res.json({ success: true, message: 'Already shared', share_count: post.share_count.length })
+        }
+
+        post.share_count.push(userId)
+        await post.save()
+
+        res.json({ success: true, message: 'Post shared', share_count: post.share_count.length })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
     }
 }
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { BadgeCheck, Heart, MessageCircle, Share2 } from 'lucide-react'
 import moment from 'moment'
-import { dummyUserData } from '../assets/assets'
+//import { dummyUserData } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux';
 import { useAuth } from '@clerk/react'
@@ -11,7 +11,13 @@ import toast from 'react-hot-toast'
 const PostCard = ({post}) => {
 
     const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>')
-    const [likes, setLikes] = useState(post.likes_count)
+    const [likes, setLikes] = useState(post.likes_count || [])
+    const [comments, setComments] = useState(post.comments || [])
+    const [shareCount, setShareCount] = useState(post.share_count?.length || 0)
+    const [showComments, setShowComments] = useState(false)
+    const [commentText, setCommentText] = useState('')
+    const [commenting, setCommenting] = useState(false)
+    const [sharing, setSharing] = useState(false)
     const currentUser = useSelector((state) => state.user.value)
 
     const { getToken } = useAuth()
@@ -35,6 +41,48 @@ const PostCard = ({post}) => {
         } catch (error) {
             toast.error(error.message)
         }
+    }
+
+    const handleComment = async () => {
+        if (!commentText.trim()) return
+
+        setCommenting(true)
+        try {
+            const { data } = await api.post(`/api/post/comment`, { postId: post._id, text: commentText.trim() }, { headers: { Authorization: `Bearer ${await getToken()}` } })
+            if (data.success) {
+                toast.success(data.message)
+                setComments(prev => [...prev, data.comment])
+                setCommentText('')
+                setShowComments(true)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+        setCommenting(false)
+    }
+
+    const handleShare = async () => {
+        setSharing(true)
+        try {
+            const { data } = await api.post(`/api/post/share`, { postId: post._id }, { headers: { Authorization: `Bearer ${await getToken()}` } })
+            if (data.success) {
+                setShareCount(data.share_count)
+                const shareText = `Check out this post on VartaGram: ${window.location.origin}`
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareText)
+                    toast.success('Share text copied to clipboard')
+                } else {
+                    toast.success(data.message)
+                }
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+        setSharing(false)
     }
 
     const navigate = useNavigate()
@@ -68,17 +116,51 @@ const PostCard = ({post}) => {
                 <Heart className={`w-4 h-4 cursor-pointer ${likes.includes(currentUser._id) && 'text-red-500 fill-red-500'}`} onClick={handleLike}/>
                 <span>{likes.length}</span>
             </div>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-1 cursor-pointer' onClick={() => setShowComments(prev => !prev)}>
                 <MessageCircle className="w-4 h-4"/>
-                <span>{12}</span>
+                <span>{comments.length}</span>
             </div>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-1 cursor-pointer' onClick={handleShare}>
                 <Share2 className="w-4 h-4"/>
-                <span>{7}</span>
+                <span>{shareCount}</span>
             </div>
-
         </div>
 
+        {showComments && (
+            <div className='border-t border-gray-200 pt-4 space-y-3'>
+                <div className='space-y-3'>
+                    {comments.length > 0 ? (
+                        comments.slice(-3).map((comment) => (
+                            <div key={comment._id || `${comment.user?._id}-${comment.text}`} className='text-sm'>
+                                <span className='font-semibold'>{comment.user?.full_name || currentUser.full_name || 'User'}</span>
+                                <span className='text-gray-700'> {comment.text}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <p className='text-gray-500 text-sm'>No comments yet.</p>
+                    )}
+                </div>
+                <div className='flex gap-2'>
+                    <input
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder='Write a comment...'
+                        className='flex-1 border border-gray-300 rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200'
+                    />
+                    <button
+                        onClick={handleComment}
+                        disabled={!commentText.trim() || commenting}
+                        className='bg-indigo-600 text-white px-4 py-2 rounded-full text-sm disabled:opacity-50'
+                    >
+                        {commenting ? 'Posting...' : 'Comment'}
+                    </button>
+                </div>
+            </div>
+        )}
+
+        <div className='mt-2 text-right text-xs text-gray-500'>
+            {sharing && 'Sharing...'}
+        </div>
 
     </div>
   )
