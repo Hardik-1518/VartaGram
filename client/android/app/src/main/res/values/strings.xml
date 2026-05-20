@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VartaGram</string>
+    <string name="title_activity_main">VartaGram</string>
+    <string name="package_name">com.vartagram.app</string>
+    <string name="custom_url_scheme">com.vartagram.app</string>
+</resources>
