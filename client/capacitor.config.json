@@ -1,0 +1,6 @@
+{
+  "appId": "com.vartagram.app",
+  "appName": "VartaGram",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
