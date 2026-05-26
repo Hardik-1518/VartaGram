@@ -63,3 +63,26 @@ export const getStories = async (req, res) =>{
        res.json({ success: false, message: error.message }); 
     }
 }
+
+// Delete a story
+export const deleteStory = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { id } = req.params;
+
+        const story = await Story.findById(id);
+        if (!story) {
+            return res.status(404).json({ success: false, message: 'Story not found' });
+        }
+
+        if (story.user !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        await Story.findByIdAndDelete(id);
+        res.json({ success: true, message: 'Story deleted successfully' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+}

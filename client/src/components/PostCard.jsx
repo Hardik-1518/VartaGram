@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { BadgeCheck, Heart, MessageCircle, Share2 } from 'lucide-react'
+import { BadgeCheck, Heart, MessageCircle, Share2, Trash2 } from 'lucide-react'
 import moment from 'moment'
 //import { dummyUserData } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
@@ -18,6 +18,7 @@ const PostCard = ({post}) => {
     const [commentText, setCommentText] = useState('')
     const [commenting, setCommenting] = useState(false)
     const [sharing, setSharing] = useState(false)
+    const [deleted, setDeleted] = useState(false)
     const currentUser = useSelector((state) => state.user.value)
 
     const { getToken } = useAuth()
@@ -85,7 +86,28 @@ const PostCard = ({post}) => {
         setSharing(false)
     }
 
+    const handleDelete = async () => {
+        if (!window.confirm('Delete this post?')) return
+
+        try {
+            const { data } = await api.delete(`/api/post/${post._id}`, {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+
+            if (data.success) {
+                toast.success(data.message)
+                setDeleted(true)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
     const navigate = useNavigate()
+
+  if (deleted) return null
 
   return (
     <div className='bg-white rounded-xl shadow p-4 space-y-4 w-full max-w-2xl'>
@@ -124,6 +146,12 @@ const PostCard = ({post}) => {
                 <Share2 className="w-4 h-4"/>
                 <span>{shareCount}</span>
             </div>
+            {currentUser?._id === post.user?._id && (
+                <div className='flex items-center gap-1 cursor-pointer text-red-600' onClick={handleDelete}>
+                    <Trash2 className='w-4 h-4'/>
+                    <span>Delete</span>
+                </div>
+            )}
         </div>
 
         {showComments && (
