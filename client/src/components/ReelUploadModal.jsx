@@ -28,28 +28,28 @@ const ReelUploadModal = ({ onClose, onUpload, loading }) => {
   };
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4'>
-      <div className='w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/60'>
-        <div className='mb-4 flex items-center justify-between'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-2'>
+      <div className='w-full max-w-2xl max-h-[calc(100vh-1rem)] overflow-y-auto rounded-3xl border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-slate-950/60'>
+        <div className='mb-4 flex items-center justify-between gap-4'>
           <div>
             <h2 className='text-xl font-semibold text-white'>Upload New Reel</h2>
             <p className='text-sm text-slate-400'>Short videos perform best when kept under 60 seconds.</p>
           </div>
-          <button onClick={onClose} className='rounded-full border border-slate-700 p-2 text-slate-300 transition hover:border-slate-500 hover:text-white'>
+          <button type='button' onClick={onClose} className='rounded-full border border-slate-700 p-2 text-slate-300 transition hover:border-slate-500 hover:text-white'>
             <X className='h-5 w-5' />
           </button>
         </div>
 
         <div className='grid gap-4 md:grid-cols-[2fr_1fr]'>
           <div className='rounded-3xl border border-slate-700 p-4'>
-            <label className='flex h-44 w-full cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-cyan-500/50 bg-slate-950 p-4 text-center text-slate-400 transition hover:border-cyan-400'>
+            <label className='flex min-h-[10rem] w-full cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-cyan-500/50 bg-slate-950 p-4 text-center text-slate-400 transition hover:border-cyan-400'>
               <UploadCloud className='mb-3 h-8 w-8 text-cyan-400' />
               <span className='text-sm font-medium text-slate-100'>Choose a video file</span>
               <span className='text-xs text-slate-500'>MP4, MOV, or WEBM up to 150MB</span>
               <input type='file' accept='video/*' className='hidden' onChange={handleSelect} />
             </label>
             {previewUrl && (
-              <video src={previewUrl} controls className='mt-4 h-60 w-full rounded-3xl object-cover' />
+              <video src={previewUrl} controls className='mt-4 max-h-72 w-full rounded-3xl object-cover' />
             )}
           </div>
 
@@ -73,6 +73,7 @@ const ReelUploadModal = ({ onClose, onUpload, loading }) => {
               </ul>
             </div>
             <button
+              type='button'
               onClick={handleUpload}
               disabled={!video || loading}
               className='w-full rounded-3xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-60'
