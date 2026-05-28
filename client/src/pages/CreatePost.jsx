@@ -20,8 +20,8 @@ const CreatePost = () => {
 
   const handleSubmit = async () => {
 
-    if(!images.length && !content){
-      return toast.error('Please add at least one image or text')
+    if(!images.length && !content.trim()){
+      throw new Error('Please add at least one image or text')
     }
 
     setLoading(true)
@@ -38,9 +38,7 @@ const CreatePost = () => {
       const token = await getToken()
 
       if(!token){
-        toast.error("Authentication error")
-        setLoading(false)
-        return
+        throw new Error('Authentication error')
       }
 
       const formData = new FormData()
@@ -65,9 +63,10 @@ const CreatePost = () => {
 
     } catch (error) {
       toast.error(error.message)
+      throw error
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
@@ -163,6 +162,7 @@ const CreatePost = () => {
             />
 
             <button
+              type='button'
               disabled={loading}
               onClick={()=> toast.promise(
                 handleSubmit(),

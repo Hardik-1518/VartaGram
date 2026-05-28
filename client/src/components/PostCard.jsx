@@ -10,7 +10,9 @@ import toast from 'react-hot-toast'
 
 const PostCard = ({post}) => {
 
-    const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>')
+    const contentText = post.content || ''
+    const postWithHashtags = contentText.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>')
+    const imageUrls = post.image_urls || []
     const [likes, setLikes] = useState(post.likes_count || [])
     const [comments, setComments] = useState(post.comments || [])
     const [shareCount, setShareCount] = useState(post.share_count?.length || 0)
@@ -123,14 +125,16 @@ const PostCard = ({post}) => {
             </div>
         </div>
          {/* Content */}
-         {post.content && <div className='text-gray-800 text-sm whitespace-pre-line' dangerouslySetInnerHTML={{__html: postWithHashtags}}/>}
+         {contentText && <div className='text-gray-800 text-sm whitespace-pre-line' dangerouslySetInnerHTML={{__html: postWithHashtags}}/>}
 
        {/* Images */}
-       <div className='grid grid-cols-2 gap-2'>
-            {post.image_urls.map((img, index)=>(
-                <img src={img} key={index} className={`w-full h-48 object-cover rounded-lg ${post.image_urls.length === 1 && 'col-span-2 h-auto'}`} alt="" />
+       {imageUrls.length > 0 && (
+        <div className='grid grid-cols-2 gap-2'>
+            {imageUrls.map((img, index)=>(
+                <img src={img} key={index} className={`w-full h-48 object-cover rounded-lg ${imageUrls.length === 1 && 'col-span-2 h-auto'}`} alt="" />
             ))}
-       </div>
+        </div>
+       )}
 
         {/* Actions */}
         <div className='flex items-center gap-4 text-gray-600 text-sm pt-2 border-t border-gray-300'>

@@ -12,6 +12,10 @@ export const addUserStory = async (req, res) =>{
         const media = req.file
         let media_url = ''
 
+        if ((media_type === 'image' || media_type === 'video') && !media) {
+            return res.status(400).json({ success: false, message: 'Media file is required for image or video stories.' });
+        }
+
         // upload media to imagekit
         if(media_type === 'image' || media_type === 'video'){
             const fileBuffer = fs.readFileSync(media.path)
@@ -75,7 +79,7 @@ export const deleteStory = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Story not found' });
         }
 
-        if (story.user !== userId) {
+        if (story.user.toString() !== userId) {
             return res.status(403).json({ success: false, message: 'Unauthorized' });
         }
 

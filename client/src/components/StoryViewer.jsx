@@ -8,6 +8,16 @@ const StoryViewer = ({viewStory, setViewStory}) => {
     useEffect(()=>{
         let timer, progressInterval;
 
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setViewStory(null)
+            }
+        }
+
+        if (viewStory) {
+            document.addEventListener('keydown', handleKeyDown)
+        }
+
         if(viewStory && viewStory.media_type !== 'video'){
             setProgress(0)
 
@@ -15,18 +25,18 @@ const StoryViewer = ({viewStory, setViewStory}) => {
             const setTime = 100;
             let elapsed = 0;
 
-           progressInterval = setInterval(() => {
+            progressInterval = setInterval(() => {
                 elapsed += setTime;
                 setProgress((elapsed / duration) * 100);
             }, setTime);
 
-             // Close story after duration(10sec)
-             timer = setTimeout(()=>{
+            timer = setTimeout(()=>{
                 setViewStory(null)
-             }, duration)
+            }, duration)
         }
 
         return ()=>{
+            document.removeEventListener('keydown', handleKeyDown)
             clearTimeout(timer);
             clearInterval(progressInterval)
         }
@@ -43,15 +53,15 @@ const StoryViewer = ({viewStory, setViewStory}) => {
         switch (viewStory.media_type) {
             case 'image':
                 return (
-                    <img src={viewStory.media_url} alt="" className='max-w-full max-h-screen object-contain'/>
+                    <img src={viewStory.media_url} alt="Story image" className='max-w-full max-h-screen object-contain'/>
                 );
             case 'video':
                 return (
-                    <video onEnded={()=>setViewStory(null)} src={viewStory.media_url} className='max-h-screen' controls autoPlay/>
+                    <video onEnded={()=>setViewStory(null)} src={viewStory.media_url} className='max-h-screen rounded-xl' controls autoPlay/>
                 );
             case 'text':
                 return (
-                    <div className='w-full h-full flex items-center justify-center p-8 text-white text-2xl text-center'>
+                    <div className='w-full h-full flex items-center justify-center p-8 text-white text-2xl text-center whitespace-pre-wrap'>
                         {viewStory.content}
                     </div>
                 );
@@ -62,17 +72,16 @@ const StoryViewer = ({viewStory, setViewStory}) => {
     }
 
   return (
-    <div className='fixed inset-0 h-screen bg-black bg-opacity-90 z-110 flex items-center justify-center' style={{backgroundColor: viewStory.media_type === 'text' ? viewStory.background_color : '#000000'}}>
-      
+    <div onClick={handleClose} className='fixed inset-0 h-screen bg-black bg-opacity-90 z-110 flex items-center justify-center transition-opacity duration-300' style={{backgroundColor: viewStory.media_type === 'text' ? viewStory.background_color : '#000000'}}>
+      <div className='absolute inset-0 opacity-0' />
       {/* Progress Bar */}
       <div className='absolute top-0 left-0 w-full h-1 bg-gray-700'>
-        <div className='h-full bg-white transition-all duration-100 linear' style={{width: `${progress}%`}}>
-
-        </div>
+        <div className='h-full bg-white transition-all duration-100 linear' style={{width: `${progress}%`}} />
       </div>
+
       {/* User Info - Top Left */}
       <div className='absolute top-4 left-4 flex items-center space-x-3 p-2 px-4 sm:p-4 sm:px-8 backdrop-blur-2xl rounded bg-black/50'>
-        <img src={viewStory.user?.profile_picture} alt="" className='w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-white'/>
+        <img src={viewStory.user?.profile_picture} alt="Profile" className='w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-white'/>
         <div className='text-white font-medium flex items-center gap-1.5'>
             <span>{viewStory.user?.full_name}</span>
             <BadgeCheck size={18}/>
@@ -80,12 +89,12 @@ const StoryViewer = ({viewStory, setViewStory}) => {
       </div>
 
        {/* Close Button */}
-       <button onClick={handleClose} className='absolute top-4 right-4 text-white text-3xl font-bold focus:outline-none'>
+       <button onClick={(event)=>{event.stopPropagation(); handleClose()}} className='absolute top-4 right-4 text-white text-3xl font-bold focus:outline-none'>
         <X className='w-8 h-8 hover:scale-110 transition cursor-pointer'/>
        </button>
 
        {/* Content Wrapper */}
-       <div className='max-w-[90vw] max-h-[90vh] flex items-center justify-center'>
+       <div onClick={(event)=> event.stopPropagation()} className='max-w-[90vw] max-h-[90vh] flex items-center justify-center rounded-3xl overflow-hidden border border-white/10 shadow-2xl'>
             {renderContent()}
        </div>
     </div>

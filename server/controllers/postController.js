@@ -10,9 +10,16 @@ export const addPost = async (req, res) => {
         const { userId } = req.auth()
         const { content, post_type } = req.body
 
-        const images = req.files || []   // ✅ important fix
-
+        const images = req.files || []
         let image_urls = []
+
+        if (post_type !== 'text' && images.length === 0) {
+            return res.status(400).json({ success: false, message: 'Images are required for image posts.' })
+        }
+
+        if (post_type === 'text' && !content?.trim()) {
+            return res.status(400).json({ success: false, message: 'Text content is required for text posts.' })
+        }
 
         if (images.length > 0) {
             image_urls = await Promise.all(
@@ -164,7 +171,7 @@ export const deletePost = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Post not found' });
         }
 
-        if (post.user !== userId) {
+        if (post.user.toString() !== userId) {
             return res.status(403).json({ success: false, message: 'Unauthorized' });
         }
 
