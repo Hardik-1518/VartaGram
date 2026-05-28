@@ -1,5 +1,5 @@
 import React, { useRef } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Login from './pages/Login'
 import Feed from './pages/Feed'
 import Messages from './pages/Messages'
@@ -101,7 +101,8 @@ const App = () => {
           <Route path='messages/:userId' element={<ChatBox/>}/>
           <Route path='connections' element={<Connections/>}/>
           <Route path='discover' element={<Discover/>}/>
-          <Route path='reels' element={<Reels/>}/>
+          <Route path='verticals' element={<Reels/>}/>
+          <Route path='reels' element={<Navigate to='/verticals' replace />} />
           <Route path='profile' element={<Profile/>}/>
           <Route path='profile/:profileId' element={<Profile/>}/>
           <Route path='create-post' element={<CreatePost/>}/>

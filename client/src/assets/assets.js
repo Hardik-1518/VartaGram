@@ -20,7 +20,7 @@ export const menuItemsData = [
     { to: '/messages', label: 'Messages', Icon: MessageCircle },
     { to: '/connections', label: 'Connections', Icon: Users },
     { to: '/discover', label: 'Discover', Icon: Search },
-    { to: '/reels', label: 'Reels', Icon: Video },
+    { to: '/verticals', label: 'Verticals', Icon: Video },
     { to: '/profile', label: 'Profile', Icon: UserIcon },
 ];
 

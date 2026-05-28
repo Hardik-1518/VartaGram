@@ -49,14 +49,14 @@ const Reels = () => {
     <div className='h-screen overflow-hidden bg-slate-950 text-white'>
       <div className='flex items-center justify-between border-b border-slate-800 px-4 py-4 sm:px-6'>
         <div>
-          <h1 className='text-2xl font-semibold tracking-tight'>Reels</h1>
-          <p className='text-slate-400 mt-1'>Watch, create, and engage with short immersive videos.</p>
+          <h1 className='text-2xl font-semibold tracking-tight'>Verticals</h1>
+          <p className='text-slate-400 mt-1'>Watch, create, and engage with short immersive vertical videos.</p>
         </div>
         <button
           className='rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400'
           onClick={() => setShowUploadModal(true)}
         >
-          Upload Reel
+          Upload Vertical
         </button>
       </div>
 
@@ -83,7 +83,7 @@ const Reels = () => {
         )}
 
         {!hasMore && items.length > 0 && (
-          <div className='text-center text-slate-400 py-6'>No more reels available.</div>
+          <div className='text-center text-slate-400 py-6'>No more verticals available.</div>
         )}
 
         {error && (
@@ -99,7 +99,7 @@ const Reels = () => {
               const token = await getToken();
               if (!token) return;
               await dispatch(uploadReel({ formData, token })).unwrap();
-              toast.success('Reel uploaded successfully');
+              toast.success('Vertical uploaded successfully');
               setShowUploadModal(false);
             } catch (uploadError) {
               toast.error(uploadError || 'Upload failed');

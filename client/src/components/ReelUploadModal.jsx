@@ -32,8 +32,8 @@ const ReelUploadModal = ({ onClose, onUpload, loading }) => {
       <div className='w-full max-w-2xl max-h-[calc(100vh-1rem)] overflow-y-auto rounded-3xl border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-slate-950/60'>
         <div className='mb-4 flex items-center justify-between gap-4'>
           <div>
-            <h2 className='text-xl font-semibold text-white'>Upload New Reel</h2>
-            <p className='text-sm text-slate-400'>Short videos perform best when kept under 60 seconds.</p>
+            <h2 className='text-xl font-semibold text-white'>Upload New Vertical</h2>
+            <p className='text-sm text-slate-400'>Short vertical videos perform best when kept under 60 seconds.</p>
           </div>
           <button type='button' onClick={onClose} className='rounded-full border border-slate-700 p-2 text-slate-300 transition hover:border-slate-500 hover:text-white'>
             <X className='h-5 w-5' />
@@ -67,7 +67,7 @@ const ReelUploadModal = ({ onClose, onUpload, loading }) => {
             <div className='space-y-2 text-sm text-slate-400'>
               <p className='text-slate-200'>Tips:</p>
               <ul className='list-disc space-y-1 pl-5'>
-                <li>Keep reels short and visually engaging.</li>
+                <li>Keep verticals short and visually engaging.</li>
                 <li>Use captions and strong hooks.</li>
                 <li>Vertical video works best for mobile.</li>
               </ul>
@@ -78,7 +78,7 @@ const ReelUploadModal = ({ onClose, onUpload, loading }) => {
               disabled={!video || loading}
               className='w-full rounded-3xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-60'
             >
-              {loading ? 'Uploading...' : 'Upload Reel'}
+              {loading ? 'Uploading...' : 'Upload Vertical'}
             </button>
           </div>
         </div>

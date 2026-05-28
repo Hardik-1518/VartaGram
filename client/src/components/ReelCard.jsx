@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { likeReel, commentReel, shareReel, saveReel } from '../features/reels/reelsSlice';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
+import { Volume2, VolumeX } from 'lucide-react';
 
 const ReelCard = ({ reel, currentUser }) => {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ const ReelCard = ({ reel, currentUser }) => {
   const [commentLoading, setCommentLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
 
   const ownedBySelf = currentUser?._id === reel.user?._id;
   const liked = useMemo(() => reel.likes.includes(currentUser?._id), [reel.likes, currentUser]);
@@ -51,9 +53,9 @@ const ReelCard = ({ reel, currentUser }) => {
       const token = await getToken();
       if (!token) return;
       await dispatch(shareReel({ reelId: reel._id, token })).unwrap();
-      const shareUrl = `${window.location.origin}/reels#${reel._id}`;
+      const shareUrl = `${window.location.origin}/verticals#${reel._id}`;
       await navigator.clipboard.writeText(shareUrl);
-      toast.success('Reel link copied to clipboard');
+      toast.success('Vertical link copied to clipboard');
     } catch (error) {
       toast.error(error.message || 'Could not share reel');
     }
@@ -94,7 +96,7 @@ const ReelCard = ({ reel, currentUser }) => {
         src={reel.video_url}
         className='absolute inset-0 h-full w-full object-cover'
         autoPlay
-        muted
+        muted={isMuted}
         loop
         playsInline
         preload='metadata'
@@ -110,15 +112,26 @@ const ReelCard = ({ reel, currentUser }) => {
               <p className='text-sm text-slate-300'>@{reel.user.username}</p>
             </div>
           </div>
-          {!ownedBySelf && (
+
+          <div className='flex items-center gap-2'>
             <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className='rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-60'
+              type='button'
+              onClick={() => setIsMuted((prev) => !prev)}
+              className='rounded-full bg-slate-900/70 p-2 text-slate-100 transition hover:bg-slate-800'
+              aria-label={isMuted ? 'Unmute reel' : 'Mute reel'}
             >
-              {isFollowing ? 'Following' : 'Follow'}
+              {isMuted ? <VolumeX className='h-4 w-4' /> : <Volume2 className='h-4 w-4' />}
             </button>
-          )}
+            {!ownedBySelf && (
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className='rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-60'
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className='space-y-5'>
