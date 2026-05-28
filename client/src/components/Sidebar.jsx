@@ -2,15 +2,14 @@ import React from 'react'
 import { assets, dummyUserData } from '../assets/assets'
 import { Link, useNavigate } from 'react-router-dom'
 import MenuItems from './MenuItems'
-import { CirclePlus, LogOut } from 'lucide-react'
-import {UserButton, useClerk} from '@clerk/react'
+import { CirclePlus } from 'lucide-react'
+import { UserButton } from '@clerk/react'
 import { useSelector } from 'react-redux';
 
 const Sidebar = () => {
 
     const navigate = useNavigate()
     const user = useSelector((state) => state.user.value)
-    const {signOut} = useClerk()
 
   return (
     <div className='hidden sm:flex w-60 xl:w-72 bg-white border-r border-gray-200 flex flex-col justify-between items-center'>
@@ -36,7 +35,6 @@ const Sidebar = () => {
                     </div>
                 </div>
             </div>
-            <LogOut onClick={signOut} className='w-4.5 text-gray-400 hover:text-gray-700 transition cursor-pointer'/>
         </div>
 
     </div>

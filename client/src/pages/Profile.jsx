@@ -5,7 +5,7 @@ import UserProfileInfo from '../components/UserProfileInfo'
 import PostCard from '../components/PostCard'
 import moment from 'moment'
 import ProfileModal from '../components/ProfileModal'
-import { useAuth } from '@clerk/react'
+import { useAuth, useClerk } from '@clerk/react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 import { useSelector } from 'react-redux'
@@ -15,6 +15,7 @@ const Profile = () => {
   const currentUser = useSelector((state) => state.user.value)
 
   const { getToken } = useAuth()
+  const { signOut } = useClerk()
   const { profileId } = useParams()
 
   const [user, setUser] = useState(null)
@@ -100,6 +101,18 @@ const Profile = () => {
             profileId={profileId}
             setShowEdit={setShowEdit}
           />
+
+          {(!profileId || profileId === currentUser?._id) && (
+            <div className='flex justify-end border-t border-gray-100 p-4'>
+              <button
+                type='button'
+                onClick={signOut}
+                className='inline-flex items-center rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50'
+              >
+                Logout
+              </button>
+            </div>
+          )}
 
         </div>
 
