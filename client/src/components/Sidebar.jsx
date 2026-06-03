@@ -14,7 +14,7 @@ const Sidebar = () => {
   return (
     <div className='hidden sm:flex w-60 xl:w-72 bg-white border-r border-gray-200 flex flex-col justify-between items-center'>
       <div className='w-full'>
-            <img onClick={()=> navigate('/')} src={assets.logo} className='w-26 ml-7 my-2 cursor-pointer' alt="" />
+            <img onClick={()=> navigate('/')} src={assets.logo} className='w-48 ml-7 my-2 cursor-pointer' alt="" />
             <hr className='border-gray-300 mb-8'/>
 
             <MenuItems />

@@ -1,7 +1,8 @@
 import React from 'react'
 import Sidebar from '../components/Sidebar'
 import BottomNav from '../components/BottomNav'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Link } from 'react-router-dom'
+import { assets } from '../assets/assets'
 import Loading from '../components/Loading'
 import { useSelector } from 'react-redux'
 
@@ -20,6 +21,12 @@ const Layout = () => {
       <Sidebar />
 
       <div className='flex-1 bg-slate-50 pb-20 sm:pb-0'>
+        <div className='sm:hidden sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-3'>
+          <Link to='/' className='inline-flex items-center gap-2'>
+            <img src={assets.logo} alt='VartaGram Logo' className='h-12 object-contain' />
+          </Link>
+        </div>
+
         <Outlet />
       </div>
 
