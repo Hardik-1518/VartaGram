@@ -1,0 +1,95 @@
+# Node dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+/.pnp/
+.pnp.js
+
+# Optional npm cache directory
+.npm
+.npmrc
+
+# Local env files
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build output
+/dist/
+/build/
+/client/dist/
+/client/build/
+/server/build/
+
+# Vite / Webpack / bundler cache
+/.vite/
+/.cache/
+
+# Capacitor / Android generated files
+client/android/app/build/
+client/android/.gradle/
+client/android/build/
+client/android/captcitor-build/
+client/android/captocir-settings.gradle
+client/android/local.properties
+client/android/gradle.properties
+client/android/gradle/wrapper/
+client/android/.idea/
+client/android/captcitor-cordova-android-plugins/build/
+client/android/.expo/
+client/android/**/*.iml
+
+# Visual Studio Code
+.vscode/
+.history/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Optional IDE files
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# npm package lock backup
+package-lock.json
+
+# Mac / Linux swap files
+*~
+*.swp
+
+# Coverage directories
+coverage/
+coverage/**/*
+
+# Generated environment-specific files
+.env.*
+
+# Misc
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
