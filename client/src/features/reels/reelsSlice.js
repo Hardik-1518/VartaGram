@@ -15,16 +15,33 @@ export const fetchReels = createAsyncThunk(
   }
 );
 
+/**
+ * Upload reel - Direct Cloudinary upload
+ * Frontend handles video upload to Cloudinary, backend saves metadata only
+ */
 export const uploadReel = createAsyncThunk(
   'reels/uploadReel',
-  async ({ formData, token }, { rejectWithValue }) => {
+  async ({ videoUrl, caption, token, metadata }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/api/reel/upload', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+      const response = await api.post(
+        '/api/reel/upload-metadata',
+        {
+          video_url: videoUrl,
+          caption,
+          // Optional metadata for analytics
+          ...(metadata && {
+            duration: metadata.duration,
+            file_size: metadata.fileSize,
+            cloudinary_public_id: metadata.cloudinaryPublicId
+          })
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
       return response.data.reel;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);

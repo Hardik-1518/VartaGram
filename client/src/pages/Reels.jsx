@@ -94,15 +94,28 @@ const Reels = () => {
       {showUploadModal && (
         <ReelUploadModal
           onClose={() => setShowUploadModal(false)}
-          onUpload={async (formData) => {
+          onUploadSuccess={async (uploadData) => {
             try {
               const token = await getToken();
               if (!token) return;
-              await dispatch(uploadReel({ formData, token })).unwrap();
+              
+              // Video is already uploaded to Cloudinary
+              // Now save metadata to backend
+              await dispatch(uploadReel({
+                videoUrl: uploadData.videoUrl,
+                caption: uploadData.caption,
+                token,
+                metadata: {
+                  duration: uploadData.duration,
+                  fileSize: uploadData.fileSize,
+                  cloudinaryPublicId: uploadData.cloudinaryPublicId
+                }
+              })).unwrap();
+              
               toast.success('Vertical uploaded successfully');
               setShowUploadModal(false);
             } catch (uploadError) {
-              toast.error(uploadError || 'Upload failed');
+              toast.error(uploadError || 'Failed to save reel metadata');
             }
           }}
           loading={uploadLoading}

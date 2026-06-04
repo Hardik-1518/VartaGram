@@ -1,7 +1,7 @@
 import express from 'express';
-import { upload } from '../configs/multer.js';
 import { protect } from '../middlewares/auth.js';
 import {
+  uploadReelMetadata,
   uploadReel,
   deleteReel,
   getReels,
@@ -13,7 +13,13 @@ import {
 
 const reelRouter = express.Router();
 
-reelRouter.post('/upload', protect, upload.single('video'), uploadReel);
+// Direct Cloudinary upload - backend saves metadata only
+reelRouter.post('/upload-metadata', protect, uploadReelMetadata);
+
+// Legacy upload (deprecated)
+reelRouter.post('/upload', protect, uploadReel);
+
+// Other endpoints
 reelRouter.delete('/:id', protect, deleteReel);
 reelRouter.get('/all', protect, getReels);
 reelRouter.post('/like', protect, likeReel);

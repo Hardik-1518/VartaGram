@@ -1,68 +1,68 @@
-import fs from 'fs';
-import path from 'path';
 import Reel from '../models/Reel.js';
 import User from '../models/User.js';
-import cloudinary from '../configs/cloudinary.js';
 
-const uploadVideoToCloudinary = async (videoPath, filename) => {
-  const result = await cloudinary.uploader.upload(videoPath, {
-    resource_type: 'video',
-    folder: 'reels',
-    public_id: path.parse(filename).name,
-    chunk_size: 6000000,
-    eager: [
-      { width: 720, height: 1280, crop: 'limit', quality: 'auto' },
-      { width: 480, height: 852, crop: 'limit', quality: 'auto' }
-    ]
-  });
-  return result.secure_url;
-};
-
-export const uploadReel = async (req, res) => {
+/**
+ * Upload reel metadata (video already uploaded to Cloudinary)
+ * Lightweight endpoint that only saves metadata to database
+ * No file handling, no backend processing
+ */
+export const uploadReelMetadata = async (req, res) => {
   try {
     const { userId } = req.auth();
-    const { caption = '' } = req.body;
-    const video = req.file;
+    const { video_url, caption = '', duration, file_size, cloudinary_public_id } = req.body;
 
-    if (!video) {
-      return res.status(400).json({ success: false, message: 'Reel video is required' });
+    // Validate required fields
+    if (!video_url) {
+      return res.status(400).json({ success: false, message: 'Video URL is required' });
     }
 
-    // Verify Cloudinary is configured
-    if (!cloudinary.config().cloud_name || !cloudinary.config().api_key || !cloudinary.config().api_secret) {
-      // cleanup temp file
-      try { if (fs.existsSync(video.path)) fs.unlinkSync(video.path) } catch(e){}
-      return res.status(500).json({ success: false, message: 'Cloudinary credentials are missing. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.' });
+    if (!caption || caption.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Caption is required' });
     }
 
-    // Ensure uploaded file exists on disk
-    if (!fs.existsSync(video.path)) {
-      return res.status(500).json({ success: false, message: 'Uploaded video file not found on server.' });
+    // Validate video URL is from Cloudinary (security measure)
+    if (!video_url.includes('cloudinary') && !video_url.includes('res.cloudinary')) {
+      return res.status(400).json({ success: false, message: 'Invalid video URL' });
     }
 
-    let videoUrl;
-    try {
-      videoUrl = await uploadVideoToCloudinary(video.path, video.originalname);
-    } catch (uploadErr) {
-      console.error('Cloudinary upload error:', uploadErr);
-      try { if (fs.existsSync(video.path)) fs.unlinkSync(video.path) } catch(e){}
-      return res.status(500).json({ success: false, message: 'Cloudinary upload failed: ' + (uploadErr.message || String(uploadErr)) });
-    }
-
+    // Create reel with metadata
     const reel = await Reel.create({
       user: userId,
-      caption,
-      video_url: videoUrl
+      caption: caption.trim(),
+      video_url,
+      // Optional metadata for analytics
+      ...(duration && { duration }),
+      ...(file_size && { file_size }),
+      ...(cloudinary_public_id && { cloudinary_public_id })
     });
 
-    try { if (fs.existsSync(video.path)) fs.unlinkSync(video.path) } catch(e){}
-
-    res.json({ success: true, reel, message: 'Reel uploaded successfully' });
+    res.status(201).json({ 
+      success: true, 
+      reel,
+      message: 'Reel uploaded successfully' 
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Reel metadata save error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to save reel' 
+    });
   }
 };
+
+/**
+ * Legacy upload endpoint - DEPRECATED
+ * Kept for backward compatibility, but not recommended
+ * Frontend should use Cloudinary direct upload instead
+ */
+export const uploadReel = async (req, res) => {
+  return res.status(501).json({
+    success: false,
+    message: 'Backend video upload is deprecated. Please use Cloudinary direct upload.',
+    learnMore: 'https://vartagram.docs/reel-upload-migration'
+  });
+};
+
 
 export const deleteReel = async (req, res) => {
   try {
