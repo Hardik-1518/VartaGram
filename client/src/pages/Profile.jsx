@@ -81,7 +81,7 @@ const Profile = () => {
       <div className='max-w-3xl mx-auto'>
 
         {/* Profile Card */}
-        <div className='bg-white rounded-2xl shadow overflow-hidden'>
+        <div className='relative bg-white rounded-2xl shadow overflow-hidden'>
 
           {/* Cover Photo */}
           <div className='h-40 md:h-56 bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200'>
@@ -94,6 +94,18 @@ const Profile = () => {
             )}
           </div>
 
+          {(!profileId || profileId === currentUser?._id) && (
+            <div className='absolute left-4 top-4 z-10'>
+              <button
+                type='button'
+                onClick={signOut}
+                className='inline-flex items-center rounded-full border border-gray-300 bg-white/95 px-4 py-2 text-sm font-medium text-gray-700 shadow-sm backdrop-blur-sm transition hover:bg-gray-50'
+              >
+                Logout
+              </button>
+            </div>
+          )}
+
           {/* User Info */}
           <UserProfileInfo
             user={user}
@@ -101,18 +113,6 @@ const Profile = () => {
             profileId={profileId}
             setShowEdit={setShowEdit}
           />
-
-          {(!profileId || profileId === currentUser?._id) && (
-            <div className='flex justify-end border-t border-gray-100 p-4'>
-              <button
-                type='button'
-                onClick={signOut}
-                className='inline-flex items-center rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50'
-              >
-                Logout
-              </button>
-            </div>
-          )}
 
         </div>
 

@@ -13,5 +13,5 @@
     <path d="M86 28 L150 114 L214 28" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>
     <path d="M82 50 L150 108 L218 50" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.15"/>
   </g>
-  <text x="266" y="98" font-family="Inter, system-ui, sans-serif" font-size="86" fill="url(#brandGrad)" font-weight="800">VartaGram</text>
+  <text x="266" y="98" font-family="Comic Sans MS, ComicSans, cursive" font-size="88" letter-spacing="-0.02em" fill="url(#brandGrad)" font-weight="700">VartaGram</text>
 </svg>
