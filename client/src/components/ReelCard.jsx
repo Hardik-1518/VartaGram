@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReelActions from './ReelActions';
 import ReelComments from './ReelComments';
 import { useAuth } from '@clerk/react';
@@ -10,11 +11,10 @@ import { Volume2, VolumeX } from 'lucide-react';
 
 const ReelCard = ({ reel, currentUser }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { getToken } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
   const ownedBySelf = currentUser?._id === reel.user?._id;
@@ -72,25 +72,14 @@ const ReelCard = ({ reel, currentUser }) => {
     }
   };
 
-  const handleFollow = async () => {
-    if (ownedBySelf || isFollowing) return;
-    setFollowLoading(true);
-    try {
-      const token = await getToken();
-      if (!token) return;
-      await api.post('/api/user/follow', { id: reel.user._id }, { headers: { Authorization: `Bearer ${token}` } });
-      setIsFollowing(true);
-      toast.success(`Following ${reel.user.full_name}`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Unable to follow');
-    }
-    setFollowLoading(false);
+  const handleNavigateToProfile = () => {
+    navigate(`/profile/${reel.user._id}`);
   };
 
   
 
   return (
-    <div className='relative flex h-[calc(100vh-88px)] flex-col overflow-hidden bg-slate-950 text-white'>
+    <div className='relative flex h-[calc(100vh-64px)] sm:h-[calc(100vh-88px)] flex-col overflow-hidden bg-slate-950 text-white'>
       <div className='absolute inset-0 bg-black/70' />
       <video
         src={reel.video_url}
@@ -104,37 +93,26 @@ const ReelCard = ({ reel, currentUser }) => {
       <div className='absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent' />
 
       <div className='relative z-10 flex flex-1 flex-col justify-between px-4 pb-6 pt-5 sm:px-6'>
-        <div className='flex items-center justify-between gap-3'>
-          <div className='flex items-center gap-3 rounded-full bg-slate-900/70 px-3 py-2'>
-            <img src={reel.user.profile_picture} alt={reel.user.full_name} className='h-11 w-11 rounded-full object-cover ring-2 ring-cyan-400' />
-            <div>
-              <h2 className='font-semibold'>{reel.user.full_name}</h2>
-              <p className='text-sm text-slate-300'>@{reel.user.username}</p>
+        <div className='flex items-center justify-end'>
+          <button
+            type='button'
+            onClick={() => setIsMuted((prev) => !prev)}
+            className='rounded-full bg-slate-900/70 p-2 text-slate-100 transition hover:bg-slate-800'
+            aria-label={isMuted ? 'Unmute reel' : 'Mute reel'}
+          >
+            {isMuted ? <VolumeX className='h-4 w-4' /> : <Volume2 className='h-4 w-4' />}
+          </button>
+        </div>
+
+        <div className='space-y-3'>
+          <div className='rounded-full bg-slate-900/70 px-3 py-1.5 w-fit flex items-center gap-2 cursor-pointer hover:bg-slate-800 transition' onClick={handleNavigateToProfile}>
+            <img src={reel.user.profile_picture} alt={reel.user.full_name} className='h-6 w-6 rounded-full object-cover ring-1 ring-cyan-400' />
+            <div className='flex flex-col'>
+              <p className='text-xs font-semibold'>{reel.user.full_name}</p>
+              <p className='text-xs text-slate-300'>@{reel.user.username}</p>
             </div>
           </div>
 
-          <div className='flex items-center gap-2'>
-            <button
-              type='button'
-              onClick={() => setIsMuted((prev) => !prev)}
-              className='rounded-full bg-slate-900/70 p-2 text-slate-100 transition hover:bg-slate-800'
-              aria-label={isMuted ? 'Unmute reel' : 'Mute reel'}
-            >
-              {isMuted ? <VolumeX className='h-4 w-4' /> : <Volume2 className='h-4 w-4' />}
-            </button>
-            {!ownedBySelf && (
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className='rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-60'
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className='space-y-5'>
           <div className='rounded-3xl bg-slate-900/70 p-4 shadow-xl shadow-slate-950/60'>
             <p className='text-base leading-7 text-slate-100'>{reel.caption || 'No caption added yet.'}</p>
           </div>

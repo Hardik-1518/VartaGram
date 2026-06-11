@@ -47,13 +47,13 @@ const Reels = () => {
 
   return (
     <div className='h-screen overflow-hidden bg-slate-950 text-white'>
-      <div className='flex items-center justify-between border-b border-slate-800 px-4 py-4 sm:px-6'>
+      <div className='flex items-center justify-between border-b border-slate-800 px-4 py-2 sm:px-6 sm:py-3'>
         <div>
-          <h1 className='text-2xl font-semibold tracking-tight'>Verticals</h1>
-          <p className='text-slate-400 mt-1'>Watch, create, and engage with short immersive vertical videos.</p>
+          <h1 className='text-xl font-semibold tracking-tight'>Verticals</h1>
+          <p className='text-slate-400 text-xs mt-0.5 hidden sm:block'>Watch, create, and engage with short immersive vertical videos.</p>
         </div>
         <button
-          className='rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400'
+          className='rounded-full bg-cyan-500 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400'
           onClick={() => setShowUploadModal(true)}
         >
           Upload Vertical
@@ -61,7 +61,7 @@ const Reels = () => {
       </div>
 
       <div
-        className='h-[calc(100vh-88px)] overflow-y-auto snap-y snap-mandatory'
+        className='h-[calc(100vh-64px)] sm:h-[calc(100vh-88px)] overflow-y-auto snap-y snap-mandatory'
         onScroll={handleScroll}
       >
         {items.length === 0 && loading && (
@@ -71,7 +71,7 @@ const Reels = () => {
         )}
 
         {items.map((reel) => (
-          <div key={reel._id} className='snap-start min-h-[calc(100vh-88px)]'>
+          <div key={reel._id} className='snap-start min-h-[calc(100vh-64px)] sm:min-h-[calc(100vh-88px)]'>
             <ReelCard reel={reel} currentUser={currentUser} />
           </div>
         ))}
