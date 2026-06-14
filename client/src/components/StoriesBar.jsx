@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 
-const StoriesBar = () => {
+const StoriesBar = ({ openCreateModal = false }) => {
 
     const {getToken} = useAuth()
 
@@ -60,6 +60,11 @@ const StoriesBar = () => {
     useEffect(()=>{
         fetchStories()
     },[])
+
+    // Open the create story modal when parent requests it (e.g., via navigation state)
+    useEffect(()=>{
+        if (openCreateModal) setShowModal(true)
+    },[openCreateModal])
 
   return (
     <div className='w-screen sm:w-[calc(100vw-240px)] lg:max-w-2xl no-scrollbar overflow-x-auto px-4'>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '@clerk/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchReels, resetReels, uploadReel } from '../features/reels/reelsSlice';
 import ReelCard from '../components/ReelCard';
 import ReelUploadModal from '../components/ReelUploadModal';
@@ -10,6 +11,8 @@ import toast from 'react-hot-toast';
 const Reels = () => {
   const dispatch = useDispatch();
   const { getToken } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { items, page, hasMore, loading, uploadLoading, error } = useSelector((state) => state.reels);
   const currentUser = useSelector((state) => state.user.value);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -28,7 +31,14 @@ const Reels = () => {
   useEffect(() => {
     dispatch(resetReels());
     loadReels(1);
-  }, [dispatch, getToken]);
+
+    // open upload modal if navigated with state
+    if (location?.state?.openUpload) {
+      setShowUploadModal(true);
+      // clear the location state so it doesn't reopen on back/refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [dispatch, getToken, location, navigate]);
 
   const handleScroll = async (event) => {
     const { scrollTop, scrollHeight, clientHeight } = event.target;

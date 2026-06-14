@@ -117,19 +117,18 @@ const ReelCard = ({ reel, currentUser }) => {
             <p className='text-base leading-7 text-slate-100'>{reel.caption || 'No caption added yet.'}</p>
           </div>
 
-          <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-            <ReelActions
-              liked={liked}
-              likeCount={reel.likes.length}
-              commentCount={reel.comments.length}
-              shareCount={reel.share_count.length}
-              saved={saved}
-              onLike={handleLike}
-              onComment={() => setShowComments((prev) => !prev)}
-              onShare={handleShare}
-              onSave={handleSave}
-            />
-          </div>
+          <ReelActions
+            className='absolute right-4 bottom-20'
+            liked={liked}
+            likeCount={reel.likes.length}
+            commentCount={reel.comments.length}
+            shareCount={reel.share_count.length}
+            saved={saved}
+            onLike={handleLike}
+            onComment={() => setShowComments((prev) => !prev)}
+            onShare={handleShare}
+            onSave={handleSave}
+          />
 
           {showComments && (
             <ReelComments

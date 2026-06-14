@@ -43,8 +43,8 @@ const RecentMessages = () => {
     useEffect(()=>{
         if(user){
             fetchRecentMessages()
-            setInterval(fetchRecentMessages, 30000)
-            return ()=> {clearInterval()}
+            const intervalId = setInterval(fetchRecentMessages, 30000)
+            return ()=> {clearInterval(intervalId)}
         }
         
     },[user])

@@ -1,40 +1,40 @@
 import React from 'react';
 import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
 
-const ReelActions = ({ liked, likeCount, commentCount, shareCount, saved, onLike, onComment, onShare, onSave }) => {
+const ReelActions = ({ liked, likeCount, commentCount, shareCount, saved, onLike, onComment, onShare, onSave, className = '' }) => {
   return (
-    <div className='flex flex-wrap gap-3 rounded-3xl bg-slate-900/80 p-3 shadow-lg shadow-slate-950/40'>
-      <button
-        onClick={onLike}
-        className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${liked ? 'bg-rose-500 text-white' : 'bg-white/10 text-slate-100 hover:bg-white/20'}`}
-      >
-        <Heart className='h-4 w-4' />
-        {likeCount}
-      </button>
+    <div className={`flex flex-col items-center gap-4 z-30 ${className}`}>
+      <div className='flex flex-col items-center'>
+        <button
+          onClick={onLike}
+          className={`rounded-full p-3 flex items-center justify-center transition ${liked ? 'bg-rose-500 text-white' : 'bg-white/10 text-slate-100 hover:bg-white/20'}`}
+          aria-label='Like'
+        >
+          <Heart className='h-6 w-6' />
+        </button>
+        <span className='text-xs text-slate-200 mt-1'>{likeCount}</span>
+      </div>
 
-      <button
-        onClick={onComment}
-        className='flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-slate-100 hover:bg-white/20'
-      >
-        <MessageCircle className='h-4 w-4' />
-        {commentCount}
-      </button>
+      <div className='flex flex-col items-center'>
+        <button onClick={onComment} className='rounded-full p-3 bg-white/10 text-slate-100 hover:bg-white/20' aria-label='Comments'>
+          <MessageCircle className='h-6 w-6' />
+        </button>
+        <span className='text-xs text-slate-200 mt-1'>{commentCount}</span>
+      </div>
 
-      <button
-        onClick={onShare}
-        className='flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-slate-100 hover:bg-white/20'
-      >
-        <Share2 className='h-4 w-4' />
-        {shareCount}
-      </button>
+      <div className='flex flex-col items-center'>
+        <button onClick={onShare} className='rounded-full p-3 bg-white/10 text-slate-100 hover:bg-white/20' aria-label='Share'>
+          <Share2 className='h-6 w-6' />
+        </button>
+        <span className='text-xs text-slate-200 mt-1'>{shareCount}</span>
+      </div>
 
-      <button
-        onClick={onSave}
-        className='flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-slate-100 hover:bg-white/20'
-      >
-        <Bookmark className='h-4 w-4' />
-        {saved ? 'Saved' : 'Save'}
-      </button>
+      <div className='flex flex-col items-center'>
+        <button onClick={onSave} className='rounded-full p-3 bg-white/10 text-slate-100 hover:bg-white/20' aria-label='Save'>
+          <Bookmark className='h-6 w-6' />
+        </button>
+        <span className='text-xs text-slate-200 mt-1'>{saved ? 'Saved' : ''}</span>
+      </div>
     </div>
   );
 };
