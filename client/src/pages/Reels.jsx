@@ -17,6 +17,7 @@ const Reels = () => {
   const currentUser = useSelector((state) => state.user.value);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [fetchingMore, setFetchingMore] = useState(false);
+  const [activeReelId, setActiveReelId] = useState(null);
 
   const loadReels = async (requestedPage = 1) => {
     try {
@@ -40,8 +41,22 @@ const Reels = () => {
     }
   }, [dispatch, getToken, location, navigate]);
 
+  useEffect(() => {
+    if (items.length > 0 && !items.some((item) => item._id === activeReelId)) {
+      setActiveReelId(items[0]._id);
+    }
+  }, [items, activeReelId]);
+
   const handleScroll = async (event) => {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
+    const activeIndex = Math.round(scrollTop / clientHeight);
+    const normalizedIndex = Math.min(Math.max(activeIndex, 0), items.length - 1);
+    const activeItem = items[normalizedIndex];
+
+    if (activeItem?._id && activeItem._id !== activeReelId) {
+      setActiveReelId(activeItem._id);
+    }
+
     if (scrollHeight - scrollTop - clientHeight < 400 && hasMore && !fetchingMore && !loading) {
       setFetchingMore(true);
       await loadReels(page + 1);
@@ -82,7 +97,7 @@ const Reels = () => {
 
         {items.map((reel) => (
           <div key={reel._id} className='snap-start min-h-[calc(100vh-64px)] sm:min-h-[calc(100vh-88px)]'>
-            <ReelCard reel={reel} currentUser={currentUser} />
+            <ReelCard reel={reel} currentUser={currentUser} isActive={reel._id === activeReelId} />
           </div>
         ))}
 

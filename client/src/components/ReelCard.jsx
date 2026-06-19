@@ -1,21 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReelActions from './ReelActions';
 import ReelComments from './ReelComments';
 import { useAuth } from '@clerk/react';
 import { useDispatch } from 'react-redux';
 import { likeReel, commentReel, shareReel, saveReel } from '../features/reels/reelsSlice';
-import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { Volume2, VolumeX } from 'lucide-react';
 
-const ReelCard = ({ reel, currentUser }) => {
+const ReelCard = ({ reel, currentUser, isActive }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { getToken } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef(null);
 
   const ownedBySelf = currentUser?._id === reel.user?._id;
   const liked = useMemo(() => reel.likes.includes(currentUser?._id), [reel.likes, currentUser]);
@@ -23,6 +23,22 @@ const ReelCard = ({ reel, currentUser }) => {
     () => reel.saved_by?.includes(currentUser?._id) || reel.saved_by?.includes('self'),
     [reel.saved_by, currentUser]
   );
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isActive) {
+      const playPromise = video.play();
+      if (playPromise?.catch) {
+        playPromise.catch(() => {
+          /* ignore autoplay block */
+        });
+      }
+    } else {
+      video.pause();
+    }
+  }, [isActive]);
 
   const handleLike = async () => {
     try {
@@ -82,10 +98,11 @@ const ReelCard = ({ reel, currentUser }) => {
     <div className='relative flex h-[calc(100vh-64px)] sm:h-[calc(100vh-88px)] flex-col overflow-hidden bg-slate-950 text-white'>
       <div className='absolute inset-0 bg-black/70' />
       <video
+        ref={videoRef}
         src={reel.video_url}
         className='absolute inset-0 h-full w-full object-cover'
         autoPlay
-        muted={isMuted}
+        muted={isMuted || !isActive}
         loop
         playsInline
         preload='metadata'
