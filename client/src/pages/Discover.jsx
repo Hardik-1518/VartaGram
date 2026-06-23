@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Search } from 'lucide-react'
 import UserCard from '../components/UserCard'
 import Loading from '../components/Loading'
@@ -11,10 +11,13 @@ const Discover = () => {
   const [input, setInput] = useState('')
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const searchTimeoutRef = useRef(null)
 
   const { getToken } = useAuth()
 
-  const fetchUsers = async (search = '') => {
+  const fetchUsers = async (search = '', pageNum = 1) => {
 
     try {
 
@@ -22,7 +25,7 @@ const Discover = () => {
       if (!token) return
 
       const { data } = await api.post(
-        '/api/user/discover',
+        `/api/user/discover?page=${pageNum}&limit=20`,
         { input: search },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -30,7 +33,13 @@ const Discover = () => {
       )
 
       if (data.success) {
-        setUsers(data.users)
+        if (pageNum === 1) {
+          setUsers(data.users)
+        } else {
+          setUsers(prev => [...prev, ...data.users])
+        }
+        setPage(data.page)
+        setHasMore(data.hasMore)
       } else {
         toast.error(data.message)
       }
@@ -42,15 +51,30 @@ const Discover = () => {
     setLoading(false)
   }
 
-  const handleSearch = async (e) => {
+  // Debounced search function
+  const handleSearch = (e) => {
 
-    if (e.key === 'Enter') {
-
-      setLoading(true)
-      await fetchUsers(input)
-      setInput('')
+    const value = e.target.value
+    setInput(value)
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
     }
 
+    // Set new timeout - only search after 500ms of inactivity
+    searchTimeoutRef.current = setTimeout(() => {
+      setLoading(true)
+      fetchUsers(value, 1)
+    }, 500)
+  }
+
+  // Scroll handler for pagination
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    if (scrollHeight - scrollTop - clientHeight < 300 && hasMore && !loading) {
+      fetchUsers(input, page + 1)
+    }
   }
 
   useEffect(() => {
@@ -61,9 +85,15 @@ const Discover = () => {
 
     loadData()
 
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+
   }, [])
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return <Loading height="60vh" />
   }
 
@@ -93,18 +123,24 @@ const Discover = () => {
                 placeholder='Search people by name, username, bio, or location...'
                 className='pl-10 sm:pl-12 py-2 w-full border border-gray-300 rounded-md max-sm:text-sm'
                 value={input}
-                onChange={(e)=>setInput(e.target.value)}
-                onKeyUp={handleSearch}
+                onChange={handleSearch}
               />
 
             </div>
           </div>
         </div>
 
-        <div className='flex flex-wrap gap-6'>
-          {users.map((user)=>(
-            <UserCard key={user._id} user={user}/>
-          ))}
+        <div className='flex flex-wrap gap-6' onScroll={handleScroll} style={{ height: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+          {users.length > 0 ? (
+            <>
+              {users.map((user)=>(
+                <UserCard key={user._id} user={user}/>
+              ))}
+              {loading && <Loading height="100px" />}
+            </>
+          ) : (
+            <p className='text-gray-500'>No users found</p>
+          )}
         </div>
 
       </div>

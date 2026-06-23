@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { assets } from '../assets/assets'
 import Loading from '../components/Loading'
 import StoriesBar from '../components/StoriesBar'
@@ -13,26 +13,36 @@ const Feed = () => {
 
   const [feeds, setFeeds] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
   const { getToken } = useAuth()
   const location = useLocation()
 
-  const fetchFeeds = async () => {
+  // Memoize fetchFeeds to prevent unnecessary re-renders
+  const fetchFeeds = useCallback(async (pageNum = 1) => {
     try {
-      setLoading(true)
+      setIsFetching(true)
 
       const token = await getToken()
 
       if (!token) {
-        setLoading(false)
+        setIsFetching(false)
         return
       }
 
-      const { data } = await api.get('/api/post/feed', {
+      const { data } = await api.get(`/api/post/feed?page=${pageNum}&limit=10`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (data.success) {
-        setFeeds(data.posts)
+        if (pageNum === 1) {
+          setFeeds(data.posts)
+        } else {
+          setFeeds(prev => [...prev, ...data.posts])
+        }
+        setPage(data.page)
+        setHasMore(data.hasMore)
       } else {
         toast.error(data.message)
       }
@@ -43,22 +53,29 @@ const Feed = () => {
     }
 
     setLoading(false)
-  }
+    setIsFetching(false)
+  }, [getToken])
 
-useEffect(() => {
-  const loadFeeds = async () => {
-    await fetchFeeds()
-  }
+  // Fetch feeds only once on mount
+  useEffect(() => {
+    setLoading(true)
+    fetchFeeds(1)
+  }, []) // Empty dependency array - only run once on mount
 
-  loadFeeds()
-}, [getToken])
+  // Handle scroll for infinite pagination
+  const handleScroll = useCallback(async (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target
+    if (scrollHeight - scrollTop - clientHeight < 500 && hasMore && !isFetching && !loading) {
+      await fetchFeeds(page + 1)
+    }
+  }, [page, hasMore, isFetching, loading, fetchFeeds])
 
   if (loading) {
     return <Loading />
   }
 
   return (
-    <div className='h-full overflow-y-scroll no-scrollbar py-10 xl:pr-5 flex items-start justify-center xl:gap-8'>
+    <div className='h-full overflow-y-scroll no-scrollbar py-10 xl:pr-5 flex items-start justify-center xl:gap-8' onScroll={handleScroll}>
 
       {/* Stories and post list */}
       <div>
@@ -72,6 +89,7 @@ useEffect(() => {
           ) : (
             <p className="text-gray-500 text-center">No posts yet</p>
           )}
+          {isFetching && <Loading height="100px" />}
         </div>
       </div>
 

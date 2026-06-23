@@ -16,6 +16,12 @@ const postSchema = new mongoose.Schema({
     share_count: [{type: String, ref: 'User'}],
 }, {timestamps: true, minimize: false})
 
+// Add indexes for frequently queried fields
+postSchema.index({ user: 1 });
+postSchema.index({ createdAt: -1 });
+postSchema.index({ 'comments.user': 1 });
+postSchema.index({ user: 1, createdAt: -1 }); // Compound index for feed queries
+
 const Post = mongoose.model('Post', postSchema)
 
 export default Post;

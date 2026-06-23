@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { ImageIcon, SendHorizonal } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
@@ -17,23 +17,84 @@ const ChatBox = () => {
   const [text, setText] = useState('')
   const [image, setImage] = useState(null)
   const [user, setUser] = useState(null)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   const messagesEndRef = useRef(null)
+  const sseRef = useRef(null)
 
   const connections = useSelector((state)=>state.connections.connections)
 
-  const fetchUserMessages = async () => {
+  // Memoized fetch function
+  const fetchUserMessages = useCallback(async (pageNum = 1) => {
     try {
-
+      setLoading(true)
       const token = await getToken()
-      dispatch(fetchMessages({token, userId}))
-
+      const { data } = await api.post(`/api/message/get?page=${pageNum}&limit=50`, { to_user_id: userId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      if (data.success) {
+        if (pageNum === 1) {
+          dispatch(resetMessages())
+        }
+        const newMessages = data.messages
+        for (const msg of newMessages) {
+          dispatch(addMessage(msg))
+        }
+        setPage(pageNum)
+        setHasMore(data.hasMore)
+      }
+      setLoading(false)
     } catch (error) {
-
       toast.error(error.message)
-
+      setLoading(false)
     }
-  }
+  }, [userId, getToken, dispatch])
+
+  // Setup SSE connection
+  useEffect(() => {
+    const token = getToken()
+    const setupSSE = async () => {
+      try {
+        const authToken = await token
+        if (!authToken) return
+
+        // Close existing connection if any
+        if (sseRef.current) {
+          sseRef.current.close()
+        }
+
+        const userIdFromAuth = (await Promise.resolve(authToken)).split('.')[0] // Get user ID from token
+        sseRef.current = new EventSource(`http://localhost:4000/api/message/${userIdFromAuth}`)
+
+        sseRef.current.onmessage = (event) => {
+          try {
+            const newMessage = JSON.parse(event.data)
+            dispatch(addMessage(newMessage))
+          } catch (e) {
+            console.error('Failed to parse SSE message:', e)
+          }
+        }
+
+        sseRef.current.onerror = () => {
+          console.error('SSE connection error')
+          sseRef.current?.close()
+        }
+      } catch (error) {
+        console.error('SSE setup error:', error)
+      }
+    }
+
+    setupSSE()
+
+    return () => {
+      if (sseRef.current) {
+        sseRef.current.close()
+      }
+    }
+  }, [getToken, dispatch])
 
   const sendMessage = async () => {
 
@@ -78,13 +139,13 @@ const ChatBox = () => {
 
   useEffect(()=>{
 
-    fetchUserMessages()
+    fetchUserMessages(1)
 
     return ()=>{
       dispatch(resetMessages())
     }
 
-  },[userId, dispatch])
+  },[userId, dispatch, fetchUserMessages])
 
   useEffect(()=>{
 

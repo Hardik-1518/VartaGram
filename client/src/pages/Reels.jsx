@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '@clerk/react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -19,7 +19,7 @@ const Reels = () => {
   const [fetchingMore, setFetchingMore] = useState(false);
   const [activeReelId, setActiveReelId] = useState(null);
 
-  const loadReels = async (requestedPage = 1) => {
+  const loadReels = useCallback(async (requestedPage = 1) => {
     try {
       const token = await getToken();
       if (!token) return;
@@ -27,7 +27,7 @@ const Reels = () => {
     } catch (err) {
       toast.error(err.message || 'Unable to load reels');
     }
-  };
+  }, [dispatch, getToken]);
 
   useEffect(() => {
     dispatch(resetReels());
@@ -39,7 +39,7 @@ const Reels = () => {
       // clear the location state so it doesn't reopen on back/refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [dispatch, getToken, location, navigate]);
+  }, [dispatch, loadReels, location, navigate]);
 
   useEffect(() => {
     if (items.length > 0 && !items.some((item) => item._id === activeReelId)) {
@@ -47,7 +47,7 @@ const Reels = () => {
     }
   }, [items, activeReelId]);
 
-  const handleScroll = async (event) => {
+  const handleScroll = useCallback(async (event) => {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const activeIndex = Math.round(scrollTop / clientHeight);
     const normalizedIndex = Math.min(Math.max(activeIndex, 0), items.length - 1);
@@ -62,7 +62,7 @@ const Reels = () => {
       await loadReels(page + 1);
       setFetchingMore(false);
     }
-  };
+  }, [items, activeReelId, page, hasMore, fetchingMore, loading, loadReels]);
 
   const reelCount = useMemo(() => items.length, [items.length]);
 

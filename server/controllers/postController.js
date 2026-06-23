@@ -63,20 +63,86 @@ export const addPost = async (req, res) => {
 
     }
 }
-// Get Posts
+// Get Posts with Pagination (Fixed N+1 Query Problem)
 export const getFeedPosts = async (req, res) =>{
     try {
         const { userId } = req.auth()
+        const page = Number(req.query.page) || 1;
+        const limit = Math.min(Number(req.query.limit) || 10, 50); // Max 50 posts per page
+        const skip = (page - 1) * limit;
+
         const user = await User.findById(userId)
 
         // User connections and followings 
         const userIds = [userId, ...user.connections, ...user.following]
-        const posts = await Post.find({user: {$in: userIds}})
-            .populate('user')
-            .populate({ path: 'comments.user', select: 'full_name username profile_picture' })
-            .sort({createdAt: -1});
+        
+        // Use aggregation pipeline to avoid N+1 query problem
+        // This is much more efficient than populate()
+        const posts = await Post.aggregate([
+            { $match: { user: { $in: userIds } } },
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$user',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'comments.user',
+                    foreignField: '_id',
+                    as: 'commentUsers'
+                }
+            },
+            {
+                $addFields: {
+                    comments: {
+                        $map: {
+                            input: '$comments',
+                            as: 'comment',
+                            in: {
+                                user: {
+                                    $arrayElemAt: [
+                                        {
+                                            $filter: {
+                                                input: '$commentUsers',
+                                                as: 'cu',
+                                                cond: { $eq: ['$$cu._id', '$$comment.user'] }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                },
+                                text: '$$comment.text',
+                                createdAt: '$$comment.createdAt'
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    commentUsers: 0 // Remove temporary field
+                }
+            }
+        ]);
 
-        res.json({ success: true, posts})
+        // Get total count for pagination metadata
+        const total = await Post.countDocuments({ user: { $in: userIds } });
+        const hasMore = skip + posts.length < total;
+
+        res.json({ success: true, posts, page, total, hasMore })
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });

@@ -9,6 +9,13 @@ const storySchema = new mongoose.Schema({
     background_color: { type: String  },
 }, {timestamps: true, minimize: false})
 
+// Add indexes for frequently queried fields
+storySchema.index({ user: 1 });
+storySchema.index({ createdAt: -1 });
+storySchema.index({ user: 1, createdAt: -1 }); // Compound index for feed queries
+// TTL index: automatically delete stories after 24 hours (86400 seconds)
+storySchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+
 const Story = mongoose.model('Story', storySchema)
 
 export default Story;

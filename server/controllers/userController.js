@@ -125,29 +125,44 @@ export const updateUserData = async (req, res) => {
     }
 }
 
-// Find Users using username, email, location, name
+// Find Users using username, email, location, name with Pagination
 export const discoverUsers = async (req, res) => {
     try {
         const { userId } = req.auth()
         const { input } = req.body;
+        const page = Number(req.query.page) || 1;
+        const limit = Math.min(Number(req.query.limit) || 20, 50); // Max 50 users per page
+        const skip = (page - 1) * limit;
 
-        const allUsers = await User.find(
-            {
-                $or: [
-                    {username: new RegExp(input, 'i')},
-                    {email: new RegExp(input, 'i')},
-                    {full_name: new RegExp(input, 'i')},
-                    {location: new RegExp(input, 'i')},
-                ]
-            }
-        )
-        const filteredUsers = allUsers.filter(user=> user._id !== userId);
+        // Escape regex special characters for safety
+        const escapedInput = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        res.json({success: true, users: filteredUsers})
+        const query = {
+            $or: [
+                { username: new RegExp(escapedInput, 'i') },
+                { email: new RegExp(escapedInput, 'i') },
+                { full_name: new RegExp(escapedInput, 'i') },
+                { location: new RegExp(escapedInput, 'i') },
+            ],
+            _id: { $ne: userId } // Exclude current user
+        };
+
+        // Get total count for pagination
+        const total = await User.countDocuments(query);
+
+        // Fetch paginated results with only necessary fields
+        const users = await User.find(query)
+            .select('_id full_name username profile_picture bio location followers following connections')
+            .limit(limit)
+            .skip(skip);
+
+        const hasMore = skip + users.length < total;
+
+        res.json({ success: true, users, page, total, hasMore })
         
     } catch (error) {
         console.log(error);
-        res.json({success: false, message: error.message})
+        res.json({ success: false, message: error.message })
     }
 }
 

@@ -26,5 +26,11 @@ const reelSchema = new mongoose.Schema({
   ]
 }, { timestamps: true, minimize: false });
 
+// Add indexes for frequently queried fields
+reelSchema.index({ user: 1 });
+reelSchema.index({ createdAt: -1 });
+reelSchema.index({ user: 1, createdAt: -1 }); // Compound index for feed queries
+reelSchema.index({ 'likes': 1 });
+
 const Reel = mongoose.model('Reel', reelSchema);
 export default Reel;

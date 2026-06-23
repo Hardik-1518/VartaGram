@@ -14,6 +14,12 @@ const userSchema = new mongoose.Schema({
     connections: [{type: String, ref: 'User' }],
 },{timestamps: true, minimize: false})
 
+// Add indexes for frequently queried fields
+userSchema.index({ username: 1 }); // For username searches
+userSchema.index({ email: 1 }); // For email lookups
+userSchema.index({ followers: 1 }); // For follower queries
+userSchema.index({ following: 1 }); // For following queries
+
 const User = mongoose.model('User', userSchema)
 
 export default User

@@ -9,6 +9,14 @@ const messageSchema = new mongoose.Schema({
     seen: {type: Boolean, default: false }
 }, { timestamps: true, minimize: false })
 
-const Message = mongoose.model('Message', messageSchema)
+// Add indexes for frequently queried fields
+messageSchema.index({ from_user_id: 1 });
+messageSchema.index({ to_user_id: 1 });
+messageSchema.index({ createdAt: -1 });
+// Compound index for message queries - critical for chat performance
+messageSchema.index({ from_user_id: 1, to_user_id: 1, createdAt: -1 });
+messageSchema.index({ to_user_id: 1, seen: 1 }); // For fetching unseen messages
+
+const Message = mongoose.model('Message', messageSchema);
 
 export default Message;

@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { BadgeCheck, Heart, MessageCircle, Share2, Trash2 } from 'lucide-react'
 import moment from 'moment'
-//import { dummyUserData } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux';
 import { useAuth } from '@clerk/react'
@@ -11,7 +10,12 @@ import toast from 'react-hot-toast'
 const PostCard = ({post}) => {
 
     const contentText = post.content || ''
-    const postWithHashtags = contentText.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>')
+    // Memoize HTML rendering to prevent re-renders
+    const postWithHashtags = useMemo(() => 
+        contentText.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>'),
+        [contentText]
+    )
+    
     const imageUrls = post.image_urls || []
     const [likes, setLikes] = useState(post.likes_count || [])
     const [comments, setComments] = useState(post.comments || [])
@@ -24,6 +28,9 @@ const PostCard = ({post}) => {
     const currentUser = useSelector((state) => state.user.value)
 
     const { getToken } = useAuth()
+
+    // Memoize like status to prevent unnecessary recalculations
+    const isLiked = useMemo(() => likes.includes(currentUser?._id), [likes, currentUser])
 
     const handleLike = async () => {
         try {
@@ -198,4 +205,5 @@ const PostCard = ({post}) => {
   )
 }
 
-export default PostCard
+// Memoize PostCard to prevent unnecessary re-renders when parent re-renders
+export default React.memo(PostCard)
