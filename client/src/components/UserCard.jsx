@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { MapPin, MessageCircle, Plus, UserPlus } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useAuth } from '@clerk/react'
@@ -14,9 +14,8 @@ const UserCard = ({ user }) => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const handleFollow = async () => {
+  const handleFollow = useCallback(async () => {
     try {
-
       const token = await getToken()
       if (!token) return
 
@@ -32,20 +31,17 @@ const UserCard = ({ user }) => {
       } else {
         toast.error(data.message)
       }
-
     } catch (error) {
       toast.error(error.message)
     }
-  }
+  }, [dispatch, getToken, user._id])
 
-  const handleConnectionRequest = async () => {
-
+  const handleConnectionRequest = useCallback(async () => {
     if (currentUser?.connections?.includes(user._id)) {
       return navigate('/messages/' + user._id)
     }
 
     try {
-
       const token = await getToken()
       if (!token) return
 
@@ -60,14 +56,20 @@ const UserCard = ({ user }) => {
       } else {
         toast.error(data.message)
       }
-
     } catch (error) {
       toast.error(error.message)
     }
-  }
+  }, [currentUser?.connections, getToken, navigate, user._id])
 
-  const isFollowing = currentUser?.following?.includes(user._id)
-  const isConnected = currentUser?.connections?.includes(user._id)
+  const isFollowing = useMemo(
+    () => currentUser?.following?.includes(user._id),
+    [currentUser?.following, user._id]
+  )
+
+  const isConnected = useMemo(
+    () => currentUser?.connections?.includes(user._id),
+    [currentUser?.connections, user._id]
+  )
 
   return (
     <div className='p-4 pt-6 flex flex-col justify-between w-72 shadow border border-gray-200 rounded-md'>
@@ -140,4 +142,4 @@ const UserCard = ({ user }) => {
   )
 }
 
-export default UserCard
+export default React.memo(UserCard)

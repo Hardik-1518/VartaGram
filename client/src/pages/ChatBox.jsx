@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import React, { memo, useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { ImageIcon, SendHorizonal } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
@@ -6,6 +6,28 @@ import { useAuth } from '@clerk/react'
 import api from '../api/axios'
 import { addMessage, prependMessages, resetMessages, setMessages } from '../features/messages/messagesSlice'
 import toast from 'react-hot-toast'
+
+const MessageBubble = memo(({ message, isSentByCurrentUser }) => (
+  <div
+    className={`flex flex-col ${
+      isSentByCurrentUser ? 'items-end' : 'items-start'
+    }`}
+  >
+    <div className={`p-2 text-sm max-w-sm bg-white text-slate-700 rounded-lg shadow ${
+      isSentByCurrentUser ? 'rounded-br-none' : 'rounded-bl-none'
+    }`}>
+      {message.message_type === 'image' && (
+        <img
+          src={message.media_url}
+          className='w-full max-w-sm rounded-lg mb-1'
+          alt=''
+        />
+      )}
+      <p>{message.text}</p>
+    </div>
+  </div>
+))
+MessageBubble.displayName = 'MessageBubble'
 
 const ChatBox = () => {
 
@@ -20,6 +42,7 @@ const ChatBox = () => {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState(null)
 
   const messagesEndRef = useRef(null)
 
@@ -33,7 +56,7 @@ const ChatBox = () => {
       const { data } = await api.post(`/api/message/get?page=${pageNum}&limit=50`, { to_user_id: userId }, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      
+
       if (data.success) {
         if (pageNum === 1) {
           dispatch(setMessages(data.messages))
@@ -43,27 +66,24 @@ const ChatBox = () => {
         setPage(pageNum)
         setHasMore(data.hasMore)
       }
-      setLoading(false)
     } catch (error) {
       toast.error(error.message)
+    } finally {
       setLoading(false)
     }
   }, [userId, getToken, dispatch])
 
-  const sendMessage = async () => {
-
+  const sendMessage = useCallback(async () => {
     try {
-
-      if(!text && !image) return
+      if (!text && !image) return
 
       const token = await getToken()
-
       const formData = new FormData()
 
       formData.append('to_user_id', userId)
       formData.append('text', text)
 
-      if(image){
+      if (image) {
         formData.append('image', image)
       }
 
@@ -72,58 +92,60 @@ const ChatBox = () => {
       })
 
       if (data.success) {
-
         setText('')
         setImage(null)
-
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl)
+          setPreviewUrl(null)
+        }
         dispatch(addMessage(data.message))
-
       } else {
-
         throw new Error(data.message)
-
       }
-
     } catch (error) {
-
       toast.error(error.message)
-
     }
-  }
+  }, [text, image, previewUrl, userId, getToken, dispatch])
 
   const sortedMessages = useMemo(
-    () => [...messages].sort((a,b)=> new Date(a.createdAt) - new Date(b.createdAt)),
+    () => [...messages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
     [messages]
   )
 
-  const handleLoadEarlier = async () => {
+  const handleLoadEarlier = useCallback(async () => {
     if (!hasMore || loading) return
     await fetchUserMessages(page + 1)
-  }
+  }, [hasMore, loading, page, fetchUserMessages])
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchUserMessages(1)
 
-    return ()=>{
+    return () => {
       dispatch(resetMessages())
     }
-  },[userId, dispatch, fetchUserMessages])
+  }, [userId, dispatch, fetchUserMessages])
 
-  useEffect(()=>{
-    if(connections?.length){
+  useEffect(() => {
+    if (connections?.length) {
       const foundUser = connections.find(
-        connection => connection._id === userId
+        (connection) => connection._id === userId
       )
       setUser(foundUser)
     }
-  },[connections, userId])
+  }, [connections, userId])
 
-  useEffect(()=>{
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth"
+      behavior: 'smooth'
     })
-  },[sortedMessages])
-
+  }, [sortedMessages])
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
   if(!user) return null
 
   return (
@@ -155,37 +177,12 @@ const ChatBox = () => {
             </button>
           )}
 
-          {sortedMessages.map((message,index)=>(
-
-            <div
-              key={index}
-              className={`flex flex-col ${
-                message.to_user_id !== user._id
-                ? 'items-start'
-                : 'items-end'
-              }`}
-            >
-
-              <div className={`p-2 text-sm max-w-sm bg-white text-slate-700 rounded-lg shadow ${
-                message.to_user_id !== user._id
-                ? 'rounded-bl-none'
-                : 'rounded-br-none'
-              }`}>
-
-                {message.message_type === 'image' && (
-                  <img
-                    src={message.media_url}
-                    className='w-full max-w-sm rounded-lg mb-1'
-                    alt=""
-                  />
-                )}
-
-                <p>{message.text}</p>
-
-              </div>
-
-            </div>
-
+          {sortedMessages.map((message) => (
+            <MessageBubble
+              key={message._id || message.createdAt}
+              message={message}
+              isSentByCurrentUser={message.to_user_id === user._id}
+            />
           ))}
 
           <div ref={messagesEndRef}/>
@@ -208,20 +205,28 @@ const ChatBox = () => {
           />
 
           <label htmlFor="image">
-
-            {image
-              ? <img src={URL.createObjectURL(image)} alt="" className='h-8 rounded'/>
-              : <ImageIcon className='size-7 text-gray-400 cursor-pointer'/>
-            }
+            {previewUrl ? (
+              <img src={previewUrl} alt="Preview" className='h-8 rounded' />
+            ) : (
+              <ImageIcon className='size-7 text-gray-400 cursor-pointer' />
+            )}
 
             <input
               type="file"
               id='image'
               accept="image/*"
               hidden
-              onChange={(e)=>setImage(e.target.files[0])}
-            />
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
 
+                if (previewUrl) {
+                  URL.revokeObjectURL(previewUrl)
+                }
+                setImage(file)
+                setPreviewUrl(URL.createObjectURL(file))
+              }}
+            />
           </label>
 
           <button

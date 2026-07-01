@@ -55,42 +55,51 @@ const App = () => {
     pathnameRef.current = pathname
   },[pathname])
 
+  const eventSourceRef = useRef(null)
+
   useEffect(() => {
-  if (!user || !import.meta.env.VITE_BASEURL) return
+    if (!user?.id || !import.meta.env.VITE_BASEURL) return
 
-  let eventSource
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
+    }
 
-  try {
-    eventSource = new EventSource(
+    const source = new EventSource(
       `${import.meta.env.VITE_BASEURL}/api/message/${user.id}`
     )
 
-    eventSource.onmessage = (event) => {
-      const message = JSON.parse(event.data)
+    eventSourceRef.current = source
 
-      if (pathnameRef.current === `/messages/${message.from_user_id._id}`) {
-        dispatch(addMessage(message))
-      } else {
-        toast.custom(
-          (t) => <Notification t={t} message={message} />,
-          { position: "bottom-right" }
-        )
+    source.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data)
+
+        if (pathnameRef.current === `/messages/${message.from_user_id._id}`) {
+          dispatch(addMessage(message))
+        } else {
+          toast.custom(
+            (t) => <Notification t={t} message={message} />,
+            { position: "bottom-right" }
+          )
+        }
+      } catch (error) {
+        console.error('Failed to parse incoming SSE message:', error)
       }
     }
 
-    eventSource.onerror = () => {
-      eventSource.close()
+    source.onerror = () => {
+      source.close()
+      eventSourceRef.current = null
     }
 
-  } catch (error) {
-    console.error("EventSource error:", error)
-  }
-
-  return () => {
-    if (eventSource) eventSource.close()
-  }
-
-}, [user, dispatch])
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
+    }
+  }, [user?.id, dispatch])
   
   return (
     <>

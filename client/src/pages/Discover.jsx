@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import UserCard from '../components/UserCard'
 import Loading from '../components/Loading'
@@ -17,68 +17,70 @@ const Discover = () => {
 
   const { getToken } = useAuth()
 
-  const fetchUsers = async (search = '', pageNum = 1) => {
+  const fetchUsers = useCallback(
+    async (search = '', pageNum = 1) => {
+      try {
+        const token = await getToken()
+        if (!token) return
 
-    try {
+        const { data } = await api.post(
+          `/api/user/discover?page=${pageNum}&limit=20`,
+          { input: search },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        )
 
-      const token = await getToken()
-      if (!token) return
-
-      const { data } = await api.post(
-        `/api/user/discover?page=${pageNum}&limit=20`,
-        { input: search },
-        {
-          headers: { Authorization: `Bearer ${token}` }
+        if (!data.success) {
+          toast.error(data.message)
+          return
         }
-      )
 
-      if (data.success) {
         if (pageNum === 1) {
           setUsers(data.users)
         } else {
-          setUsers(prev => [...prev, ...data.users])
+          setUsers((prev) => [...prev, ...data.users])
         }
+
         setPage(data.page)
         setHasMore(data.hasMore)
-      } else {
-        toast.error(data.message)
+      } catch (error) {
+        toast.error(error.message)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [getToken]
+  )
+
+  const handleSearch = useCallback(
+    (e) => {
+      const value = e.target.value
+      setInput(value)
+
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
       }
 
-    } catch (error) {
-      toast.error(error.message)
-    }
+      searchTimeoutRef.current = setTimeout(() => {
+        setLoading(true)
+        fetchUsers(value, 1)
+      }, 500)
+    },
+    [fetchUsers]
+  )
 
-    setLoading(false)
-  }
-
-  // Debounced search function
-  const handleSearch = (e) => {
-
-    const value = e.target.value
-    setInput(value)
-    
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-
-    // Set new timeout - only search after 500ms of inactivity
-    searchTimeoutRef.current = setTimeout(() => {
-      setLoading(true)
-      fetchUsers(value, 1)
-    }, 500)
-  }
-
-  // Scroll handler for pagination
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
-    if (scrollHeight - scrollTop - clientHeight < 300 && hasMore && !loading) {
-      fetchUsers(input, page + 1)
-    }
-  }
+  const handleScroll = useCallback(
+    (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+      if (scrollHeight - scrollTop - clientHeight < 300 && hasMore && !loading) {
+        fetchUsers(input, page + 1)
+      }
+    },
+    [fetchUsers, hasMore, loading, input, page]
+  )
 
   useEffect(() => {
-
     const loadData = async () => {
       await fetchUsers()
     }
@@ -90,8 +92,7 @@ const Discover = () => {
         clearTimeout(searchTimeoutRef.current)
       }
     }
-
-  }, [])
+  }, [fetchUsers])
 
   if (loading && users.length === 0) {
     return <Loading height="60vh" />

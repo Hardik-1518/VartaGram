@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import {Users, UserPlus, UserCheck, UserRoundPen, MessageSquare} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {useSelector, useDispatch} from 'react-redux'
@@ -6,6 +6,70 @@ import { useAuth } from '@clerk/react'
 import { fetchConnections } from '../features/connections/connectionsSlice'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
+
+const CountCard = memo(({ value, label }) => (
+  <div className='flex flex-col items-center justify-center gap-1 border h-20 w-40 border-gray-200 bg-white shadow rounded-md'>
+    <b>{value.length}</b>
+    <p className='text-slate-600'>{label}</p>
+  </div>
+))
+CountCard.displayName = 'CountCard'
+
+const ConnectionItem = memo(({ user, currentTab, onProfile, onUnfollow, onAccept, onMessage }) => (
+  <div key={user._id} className='w-full max-w-88 flex gap-5 p-6 bg-white shadow rounded-md '>
+    <img
+      src={user.profile_picture}
+      alt=''
+      className='rounded-full w-12 h-12 shadow-md'
+    />
+
+    <div className='flex-1'>
+      <p className='font-medium text-slate-700'>{user.full_name}</p>
+      <p className='text-slate-500'>@{user.username}</p>
+      <p className='text-sm text-gray-600'>
+        {(user.bio || '').slice(0, 30)}...
+      </p>
+
+      <div className='flex max-sm:flex-col gap-2 mt-4'>
+        <button
+          onClick={() => onProfile(user._id)}
+          className='w-full p-2 text-sm rounded bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition text-white cursor-pointer'
+        >
+          View Profile
+        </button>
+
+        {currentTab === 'Following' && (
+          <button
+            onClick={() => onUnfollow(user._id)}
+            className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-black active:scale-95 transition cursor-pointer'
+          >
+            Unfollow
+          </button>
+        )}
+
+        {currentTab === 'Pending' && (
+          <button
+            onClick={() => onAccept(user._id)}
+            className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-black active:scale-95 transition cursor-pointer'
+          >
+            Accept
+          </button>
+        )}
+
+        {currentTab === 'Connections' && (
+          <button
+            onClick={() => onMessage(user._id)}
+            className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-slate-800 active:scale-95 transition cursor-pointer flex items-center justify-center gap-1'
+          >
+            <MessageSquare className='w-4 h-4'/>
+            Message
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+))
+ConnectionItem.displayName = 'ConnectionItem'
 
 const Connections = () => {
 
@@ -17,14 +81,14 @@ const Connections = () => {
 
   const {connections, pendingConnections, followers, following} = useSelector((state)=>state.connections)
 
-  const dataArray = [
+  const dataArray = useMemo(() => [
     {label: 'Followers', value: followers, icon: Users },
     {label: 'Following', value: following, icon: UserCheck },
     {label: 'Pending', value: pendingConnections, icon: UserRoundPen },
     {label: 'Connections', value: connections, icon: UserPlus },
-  ]
+  ], [followers, following, pendingConnections, connections])
 
-  const handleUnfollow = async (userId) => {
+  const handleUnfollow = useCallback(async (userId) => {
     try {
       const token = await getToken()
 
@@ -38,15 +102,13 @@ const Connections = () => {
       }else{
         toast.error(data.message)
       }
-
     } catch (error) {
       toast.error(error.message)
     }
-  }
+  }, [getToken, dispatch])
 
-  const acceptConnection = async (userId) => {
+  const acceptConnection = useCallback(async (userId) => {
     try {
-
       const token = await getToken()
 
       const { data } = await api.post('/api/user/accept', {id: userId}, {
@@ -56,14 +118,13 @@ const Connections = () => {
       if (data.success){
         toast.success(data.message)
         dispatch(fetchConnections(token))
-      }else{
+      } else {
         toast.error(data.message)
       }
-
     } catch (error) {
       toast.error(error.message)
     }
-  }
+  }, [getToken, dispatch])
 
   useEffect(() => {
 
@@ -77,7 +138,24 @@ const Connections = () => {
 
   }, [getToken, dispatch])
 
-  const activeUsers = dataArray.find(item => item.label === currentTab)?.value || []
+  const handleTabClick = useCallback((label) => {
+    setCurrentTab(label)
+  }, [])
+
+  const handleProfileNavigation = useCallback(
+    (userId) => navigate(`/profile/${userId}`),
+    [navigate]
+  )
+
+  const handleMessageNavigation = useCallback(
+    (userId) => navigate(`/messages/${userId}`),
+    [navigate]
+  )
+
+  const activeUsers = useMemo(
+    () => dataArray.find(item => item.label === currentTab)?.value || [],
+    [currentTab, dataArray]
+  )
 
   return (
     <div className='min-h-screen bg-slate-50'>
@@ -91,11 +169,8 @@ const Connections = () => {
 
       {/* Counts */}
       <div className='mb-8 flex flex-wrap gap-6'>
-        {dataArray.map((item, index)=>(
-          <div key={index} className='flex flex-col items-center justify-center gap-1 border h-20 w-40 border-gray-200 bg-white shadow rounded-md'>
-            <b>{item.value.length}</b>
-            <p className='text-slate-600'>{item.label}</p>
-          </div>
+        {dataArray.map((item)=>(
+          <CountCard key={item.label} label={item.label} value={item.value} />
         ))}
       </div>
 
@@ -104,7 +179,7 @@ const Connections = () => {
         {
           dataArray.map((tab)=>(
             <button
-              onClick={()=> setCurrentTab(tab.label)}
+              onClick={()=> handleTabClick(tab.label)}
               key={tab.label}
               className={`cursor-pointer flex items-center px-3 py-1 text-sm rounded-md transition-colors ${
                 currentTab === tab.label
@@ -126,72 +201,17 @@ const Connections = () => {
 
        {/* Connections */}
         <div className='flex flex-wrap gap-6 mt-6'>
-
           {activeUsers.map((user)=>(
-
-            <div key={user._id} className='w-full max-w-88 flex gap-5 p-6 bg-white shadow rounded-md '>
-
-              <img
-                src={user.profile_picture}
-                alt=""
-                className="rounded-full w-12 h-12 shadow-md"
-              />
-
-              <div className='flex-1'>
-
-                <p className="font-medium text-slate-700">{user.full_name}</p>
-
-                <p className="text-slate-500">@{user.username}</p>
-
-                <p className="text-sm text-gray-600">
-                  {(user.bio || "").slice(0, 30)}...
-                </p>
-
-                <div className='flex max-sm:flex-col gap-2 mt-4'>
-
-                  <button
-                    onClick={()=> navigate(`/profile/${user._id}`)}
-                    className='w-full p-2 text-sm rounded bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition text-white cursor-pointer'
-                  >
-                    View Profile
-                  </button>
-
-                  {currentTab === 'Following' && (
-                    <button
-                      onClick={()=> handleUnfollow(user._id)}
-                      className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-black active:scale-95 transition cursor-pointer'
-                    >
-                      Unfollow
-                    </button>
-                  )}
-
-                  {currentTab === 'Pending' && (
-                    <button
-                      onClick={()=> acceptConnection(user._id)}
-                      className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-black active:scale-95 transition cursor-pointer'
-                    >
-                      Accept
-                    </button>
-                  )}
-
-                  {currentTab === 'Connections' && (
-                    <button
-                      onClick={()=> navigate(`/messages/${user._id}`)}
-                      className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-slate-800 active:scale-95 transition cursor-pointer flex items-center justify-center gap-1'
-                    >
-                      <MessageSquare className='w-4 h-4'/>
-                      Message
-                    </button>
-                  )}
-
-                </div>
-
-              </div>
-
-            </div>
-
+            <ConnectionItem
+              key={user._id}
+              user={user}
+              currentTab={currentTab}
+              onProfile={handleProfileNavigation}
+              onUnfollow={handleUnfollow}
+              onAccept={acceptConnection}
+              onMessage={handleMessageNavigation}
+            />
           ))}
-
         </div>
 
       </div>
