@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { ImageIcon, SendHorizonal } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/react'
 import api from '../api/axios'
-import { addMessage, fetchMessages, resetMessages } from '../features/messages/messagesSlice'
+import { addMessage, prependMessages, resetMessages, setMessages } from '../features/messages/messagesSlice'
 import toast from 'react-hot-toast'
 
 const ChatBox = () => {
@@ -22,7 +22,6 @@ const ChatBox = () => {
   const [loading, setLoading] = useState(false)
 
   const messagesEndRef = useRef(null)
-  const sseRef = useRef(null)
 
   const connections = useSelector((state)=>state.connections.connections)
 
@@ -37,11 +36,9 @@ const ChatBox = () => {
       
       if (data.success) {
         if (pageNum === 1) {
-          dispatch(resetMessages())
-        }
-        const newMessages = data.messages
-        for (const msg of newMessages) {
-          dispatch(addMessage(msg))
+          dispatch(setMessages(data.messages))
+        } else {
+          dispatch(prependMessages(data.messages))
         }
         setPage(pageNum)
         setHasMore(data.hasMore)
@@ -52,49 +49,6 @@ const ChatBox = () => {
       setLoading(false)
     }
   }, [userId, getToken, dispatch])
-
-  // Setup SSE connection
-  useEffect(() => {
-    const token = getToken()
-    const setupSSE = async () => {
-      try {
-        const authToken = await token
-        if (!authToken) return
-
-        // Close existing connection if any
-        if (sseRef.current) {
-          sseRef.current.close()
-        }
-
-        const userIdFromAuth = (await Promise.resolve(authToken)).split('.')[0] // Get user ID from token
-        sseRef.current = new EventSource(`http://localhost:4000/api/message/${userIdFromAuth}`)
-
-        sseRef.current.onmessage = (event) => {
-          try {
-            const newMessage = JSON.parse(event.data)
-            dispatch(addMessage(newMessage))
-          } catch (e) {
-            console.error('Failed to parse SSE message:', e)
-          }
-        }
-
-        sseRef.current.onerror = () => {
-          console.error('SSE connection error')
-          sseRef.current?.close()
-        }
-      } catch (error) {
-        console.error('SSE setup error:', error)
-      }
-    }
-
-    setupSSE()
-
-    return () => {
-      if (sseRef.current) {
-        sseRef.current.close()
-      }
-    }
-  }, [getToken, dispatch])
 
   const sendMessage = async () => {
 
@@ -137,37 +91,38 @@ const ChatBox = () => {
     }
   }
 
-  useEffect(()=>{
+  const sortedMessages = useMemo(
+    () => [...messages].sort((a,b)=> new Date(a.createdAt) - new Date(b.createdAt)),
+    [messages]
+  )
 
+  const handleLoadEarlier = async () => {
+    if (!hasMore || loading) return
+    await fetchUserMessages(page + 1)
+  }
+
+  useEffect(()=>{
     fetchUserMessages(1)
 
     return ()=>{
       dispatch(resetMessages())
     }
-
   },[userId, dispatch, fetchUserMessages])
 
   useEffect(()=>{
-
     if(connections?.length){
-
       const foundUser = connections.find(
         connection => connection._id === userId
       )
-
       setUser(foundUser)
-
     }
-
   },[connections, userId])
 
   useEffect(()=>{
-
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth"
     })
-
-  },[messages])
+  },[sortedMessages])
 
   if(!user) return null
 
@@ -190,9 +145,17 @@ const ChatBox = () => {
 
         <div className='space-y-4 max-w-4xl mx-auto'>
 
-          {[...messages]
-            .sort((a,b)=> new Date(a.createdAt) - new Date(b.createdAt))
-            .map((message,index)=>(
+          {hasMore && (
+            <button
+              onClick={handleLoadEarlier}
+              disabled={loading}
+              className='w-full max-w-xs mx-auto py-2 px-4 rounded-full bg-slate-100 text-slate-700 shadow-sm hover:bg-slate-200 transition'
+            >
+              {loading ? 'Loading earlier messages…' : 'Load earlier messages'}
+            </button>
+          )}
+
+          {sortedMessages.map((message,index)=>(
 
             <div
               key={index}

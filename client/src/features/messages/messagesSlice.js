@@ -20,6 +20,9 @@ const messagesSlice = createSlice({
         setMessages: (state, action)=>{
             state.messages = action.payload;
         },
+        prependMessages: (state, action) => {
+            state.messages = [...action.payload, ...state.messages];
+        },
         addMessage: (state, action)=>{
             state.messages = [...state.messages, action.payload]
         },
@@ -36,6 +39,6 @@ const messagesSlice = createSlice({
     }
 })
 
-export const {setMessages, addMessage, resetMessages} = messagesSlice.actions;
+export const {setMessages, prependMessages, addMessage, resetMessages} = messagesSlice.actions;
 
 export default messagesSlice.reducer
