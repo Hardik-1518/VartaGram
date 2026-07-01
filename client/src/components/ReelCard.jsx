@@ -8,6 +8,15 @@ import { likeReel, commentReel, shareReel, saveReel } from '../features/reels/re
 import toast from 'react-hot-toast';
 import { Volume2, VolumeX } from 'lucide-react';
 
+const buildOptimizedVideoUrl = (videoUrl) => {
+  if (!videoUrl || !videoUrl.includes('cloudinary')) return videoUrl;
+
+  const transform = 'q_auto,f_auto,vc_auto,w_720,dpr_auto';
+  if (videoUrl.includes(`/upload/${transform}/`)) return videoUrl;
+
+  return videoUrl.replace('/upload/', `/upload/${transform}/`);
+};
+
 const ReelCard = ({ reel, currentUser, isActive }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -23,6 +32,7 @@ const ReelCard = ({ reel, currentUser, isActive }) => {
     () => reel.saved_by?.includes(currentUser?._id) || reel.saved_by?.includes('self'),
     [reel.saved_by, currentUser]
   );
+  const optimizedVideoUrl = useMemo(() => buildOptimizedVideoUrl(reel?.video_url), [reel?.video_url]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -99,13 +109,13 @@ const ReelCard = ({ reel, currentUser, isActive }) => {
       <div className='absolute inset-0 bg-black/70' />
       <video
         ref={videoRef}
-        src={reel.video_url}
+        src={optimizedVideoUrl}
         className='absolute inset-0 h-full w-full object-cover'
         autoPlay
         muted={isMuted || !isActive}
         loop
         playsInline
-        preload='metadata'
+        preload={isActive ? 'auto' : 'metadata'}
       />
       <div className='absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent' />
 
