@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import UserCard from '../components/UserCard'
+import VirtualList from '../components/VirtualList'
 import Loading from '../components/Loading'
 import api from '../api/axios'
 import { useAuth } from '@clerk/react'
@@ -131,16 +132,28 @@ const Discover = () => {
           </div>
         </div>
 
-        <div className='flex flex-wrap gap-6' onScroll={handleScroll} style={{ height: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+        <div className='rounded-3xl border border-slate-200 bg-white shadow-sm'>
           {users.length > 0 ? (
-            <>
-              {users.map((user)=>(
-                <UserCard key={user._id} user={user}/>
-              ))}
-              {loading && <Loading height="100px" />}
-            </>
+            <VirtualList
+              items={users}
+              itemHeight={320}
+              height='calc(100vh - 300px)'
+              onScroll={handleScroll}
+              renderItem={(user) => (
+                <div key={user._id} className='px-4 py-3'>
+                  <UserCard user={user} />
+                </div>
+              )}
+            />
           ) : (
-            <p className='text-gray-500'>No users found</p>
+            <div className='min-h-[240px] flex items-center justify-center p-8'>
+              {loading ? <Loading height='100px' /> : <p className='text-gray-500'>No users found</p>}
+            </div>
+          )}
+          {loading && users.length > 0 && (
+            <div className='py-4'>
+              <Loading height='100px' />
+            </div>
           )}
         </div>
 

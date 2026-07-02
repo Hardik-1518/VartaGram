@@ -8,11 +8,12 @@ import { useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
 import Loading from '../components/Loading'
 import { useSelector } from 'react-redux'
+import { selectUser, selectUserLoading } from '../features/selectors'
 
 const Layout = () => {
 
-  const user = useSelector((state)=>state.user.value)
-  const loading = useSelector((state)=>state.user.loading)
+  const user = useSelector(selectUser)
+  const loading = useSelector(selectUserLoading)
   const location = useLocation()
   const navigate = useNavigate()
   const [showMenu, setShowMenu] = useState(false)

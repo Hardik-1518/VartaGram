@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 //import { dummyUserData } from '../assets/assets'
 import { Pencil } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { selectUser } from '../features/selectors'
 import { updateUser } from '../features/user/userSlice';
 import { useAuth } from '@clerk/react';
 import toast from 'react-hot-toast';
@@ -11,7 +12,7 @@ const ProfileModal = ({setShowEdit}) => {
     const dispatch = useDispatch();
     const {getToken} = useAuth()
 
-    const user = useSelector((state) => state.user.value)
+    const user = useSelector(selectUser)
     const [editForm, setEditForm] = useState({
         username: user.username,
         bio: user.bio,

@@ -3,6 +3,7 @@ import { BadgeCheck, Heart, MessageCircle, Share2, Trash2 } from 'lucide-react'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux';
+import { selectUser } from '../features/selectors'
 import { useAuth } from '@clerk/react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
@@ -25,7 +26,7 @@ const PostCard = ({post}) => {
     const [commenting, setCommenting] = useState(false)
     const [sharing, setSharing] = useState(false)
     const [deleted, setDeleted] = useState(false)
-    const currentUser = useSelector((state) => state.user.value)
+    const currentUser = useSelector(selectUser)
 
     const { getToken } = useAuth()
 

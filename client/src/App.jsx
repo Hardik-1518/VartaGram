@@ -9,6 +9,7 @@ import { fetchConnections } from './features/connections/connectionsSlice'
 import { addMessage } from './features/messages/messagesSlice'
 import Notification from './components/Notification'
 import Loading from './components/Loading'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const Login = lazy(() => import('./pages/Login'))
 const Feed = lazy(() => import('./pages/Feed'))
@@ -104,22 +105,24 @@ const App = () => {
   return (
     <>
       <Toaster />
-      <Suspense fallback={<div className='min-h-screen flex items-center justify-center bg-slate-50'><Loading /></div>}>
-        <Routes>
-          <Route path='/' element={ !user ? <Login /> : <Layout/>}>
-            <Route index element={<Feed/>}/>
-            <Route path='messages' element={<Messages/>}/>
-            <Route path='messages/:userId' element={<ChatBox/>}/>
-            <Route path='connections' element={<Connections/>}/>
-            <Route path='discover' element={<Discover/>}/>
-            <Route path='verticals' element={<Reels/>}/>
-            <Route path='reels' element={<Navigate to='/verticals' replace />} />
-            <Route path='profile' element={<Profile/>}/>
-            <Route path='profile/:profileId' element={<Profile/>}/>
-            <Route path='create-post' element={<CreatePost/>}/>
-          </Route>
-        </Routes>
-      </Suspense>
+      <ErrorBoundary resetKey={pathname}>
+        <Suspense fallback={<div className='min-h-screen flex items-center justify-center bg-slate-50'><Loading /></div>}>
+          <Routes>
+            <Route path='/' element={ !user ? <Login /> : <Layout/>}>
+              <Route index element={<Feed/>}/>
+              <Route path='messages' element={<Messages/>}/>
+              <Route path='messages/:userId' element={<ChatBox/>}/>
+              <Route path='connections' element={<Connections/>}/>
+              <Route path='discover' element={<Discover/>}/>
+              <Route path='verticals' element={<Reels/>}/>
+              <Route path='reels' element={<Navigate to='/verticals' replace />} />
+              <Route path='profile' element={<Profile/>}/>
+              <Route path='profile/:profileId' element={<Profile/>}/>
+              <Route path='create-post' element={<CreatePost/>}/>
+            </Route>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </>
   )
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Image, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSelector } from "react-redux";
+import { selectUser } from '../features/selectors'
 import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +15,7 @@ const CreatePost = () => {
   const [images, setImages] = useState([])
   const [loading, setLoading] = useState(false)
 
-  const user = useSelector((state)=>state.user.value)
+  const user = useSelector(selectUser)
 
   const { getToken } = useAuth()
 

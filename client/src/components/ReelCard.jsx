@@ -7,15 +7,7 @@ import { useDispatch } from 'react-redux';
 import { likeReel, commentReel, shareReel, saveReel } from '../features/reels/reelsSlice';
 import toast from 'react-hot-toast';
 import { Volume2, VolumeX } from 'lucide-react';
-
-const buildOptimizedVideoUrl = (videoUrl) => {
-  if (!videoUrl || !videoUrl.includes('cloudinary')) return videoUrl;
-
-  const transform = 'q_auto,f_auto,vc_auto,w_720,dpr_auto';
-  if (videoUrl.includes(`/upload/${transform}/`)) return videoUrl;
-
-  return videoUrl.replace('/upload/', `/upload/${transform}/`);
-};
+import { buildCloudinaryVideoPoster, buildOptimizedVideoUrl } from '../utils/videoUtils';
 
 const ReelCard = ({ reel, currentUser, isActive }) => {
   const dispatch = useDispatch();
@@ -33,6 +25,7 @@ const ReelCard = ({ reel, currentUser, isActive }) => {
     [reel.saved_by, currentUser]
   );
   const optimizedVideoUrl = useMemo(() => buildOptimizedVideoUrl(reel?.video_url), [reel?.video_url]);
+  const posterUrl = useMemo(() => buildCloudinaryVideoPoster(reel?.video_url, 720), [reel?.video_url]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -110,12 +103,16 @@ const ReelCard = ({ reel, currentUser, isActive }) => {
       <video
         ref={videoRef}
         src={optimizedVideoUrl}
+        poster={posterUrl}
         className='absolute inset-0 h-full w-full object-cover'
         autoPlay
         muted={isMuted || !isActive}
         loop
         playsInline
         preload={isActive ? 'auto' : 'metadata'}
+        onError={() => {
+          toast.error('Failed to load this reel video. Please try again later.')
+        }}
       />
       <div className='absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent' />
 

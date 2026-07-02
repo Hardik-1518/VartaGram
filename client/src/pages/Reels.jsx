@@ -1,20 +1,21 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '@clerk/react';
+import { selectReelMeta, selectUser } from '../features/selectors';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchReels, resetReels, uploadReel } from '../features/reels/reelsSlice';
 import ReelCard from '../components/ReelCard';
 import ReelUploadModal from '../components/ReelUploadModal';
 import Loading from '../components/Loading';
 import toast from 'react-hot-toast';
-
+import { buildOptimizedVideoUrl } from '../utils/videoUtils';
 const Reels = () => {
   const dispatch = useDispatch();
   const { getToken } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { items, page, hasMore, loading, uploadLoading, error } = useSelector((state) => state.reels);
-  const currentUser = useSelector((state) => state.user.value);
+  const { items, page, hasMore, loading, uploadLoading, error } = useSelector(selectReelMeta);
+  const currentUser = useSelector(selectUser);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [fetchingMore, setFetchingMore] = useState(false);
   const [activeReelId, setActiveReelId] = useState(null);
@@ -41,11 +42,32 @@ const Reels = () => {
     }
   }, [dispatch, loadReels, location, navigate]);
 
+  const activeIndex = useMemo(
+    () => items.findIndex((item) => item._id === activeReelId),
+    [items, activeReelId]
+  );
+
   useEffect(() => {
     if (items.length > 0 && !items.some((item) => item._id === activeReelId)) {
       setActiveReelId(items[0]._id);
     }
   }, [items, activeReelId]);
+
+  useEffect(() => {
+    const nextItem = items[activeIndex + 1]
+    if (!nextItem) return
+
+    const preloadUrl = buildOptimizedVideoUrl(nextItem.video_url)
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.as = 'video'
+    link.href = preloadUrl
+    document.head.appendChild(link)
+
+    return () => {
+      document.head.removeChild(link)
+    }
+  }, [activeIndex, items])
 
   const handleScroll = useCallback(async (event) => {
     const { scrollTop, scrollHeight, clientHeight } = event.target;

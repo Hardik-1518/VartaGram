@@ -9,10 +9,11 @@ import { useAuth, useClerk } from '@clerk/react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 import { useSelector } from 'react-redux'
+import { selectUser } from '../features/selectors'
 
 const Profile = () => {
 
-  const currentUser = useSelector((state) => state.user.value)
+  const currentUser = useSelector(selectUser)
 
   const { getToken } = useAuth()
   const { signOut } = useClerk()

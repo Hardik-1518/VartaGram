@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {useSelector, useDispatch} from 'react-redux'
 import { useAuth } from '@clerk/react'
 import { fetchConnections } from '../features/connections/connectionsSlice'
+import { selectConnectionsSummary } from '../features/selectors'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 
@@ -79,7 +80,7 @@ const Connections = () => {
   const { getToken } = useAuth()
   const dispatch = useDispatch()
 
-  const {connections, pendingConnections, followers, following} = useSelector((state)=>state.connections)
+  const {connections, pendingConnections, followers, following} = useSelector(selectConnectionsSummary)
 
   const dataArray = useMemo(() => [
     {label: 'Followers', value: followers, icon: Users },

@@ -5,11 +5,12 @@ import MenuItems from './MenuItems'
 import { CirclePlus } from 'lucide-react'
 import { UserButton } from '@clerk/react'
 import { useSelector } from 'react-redux';
+import { selectUser } from '../features/selectors'
 
 const Sidebar = () => {
 
     const navigate = useNavigate()
-    const user = useSelector((state) => state.user.value)
+    const user = useSelector(selectUser)
 
   return (
     <div className='hidden sm:flex w-60 xl:w-72 bg-white border-r border-gray-200 flex flex-col justify-between items-center'>

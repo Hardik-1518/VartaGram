@@ -6,6 +6,7 @@ import StoryModal from './StoryModal'
 import StoryViewer from './StoryViewer'
 import { useAuth } from '@clerk/react'
 import { useSelector } from 'react-redux'
+import { selectUser } from '../features/selectors'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 
@@ -16,7 +17,7 @@ const StoriesBar = ({ openCreateModal = false }) => {
     const [stories, setStories] = useState([])
     const [showModal, setShowModal] = useState(false)
     const [viewStory, setViewStory] = useState(null)
-    const currentUser = useSelector((state) => state.user.value)
+    const currentUser = useSelector(selectUser)
 
     const fetchStories = async () => {
         try {

@@ -1,10 +1,11 @@
-import React, { memo, useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import React, { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { ImageIcon, SendHorizonal } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/react'
 import api from '../api/axios'
 import { addMessage, prependMessages, resetMessages, setMessages } from '../features/messages/messagesSlice'
+import { selectSortedMessages, selectConnectionById } from '../features/selectors'
 import toast from 'react-hot-toast'
 
 const MessageBubble = memo(({ message, isSentByCurrentUser }) => (
@@ -31,22 +32,20 @@ MessageBubble.displayName = 'MessageBubble'
 
 const ChatBox = () => {
 
-  const { messages } = useSelector((state)=>state.messages)
   const { userId } = useParams()
+  const messages = useSelector(selectSortedMessages)
+  const currentUser = useSelector((state) => selectConnectionById(state, userId))
   const { getToken } = useAuth()
   const dispatch = useDispatch()
 
   const [text, setText] = useState('')
   const [image, setImage] = useState(null)
-  const [user, setUser] = useState(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(null)
 
   const messagesEndRef = useRef(null)
-
-  const connections = useSelector((state)=>state.connections.connections)
 
   // Memoized fetch function
   const fetchUserMessages = useCallback(async (pageNum = 1) => {
@@ -107,10 +106,7 @@ const ChatBox = () => {
     }
   }, [text, image, previewUrl, userId, getToken, dispatch])
 
-  const sortedMessages = useMemo(
-    () => [...messages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
-    [messages]
-  )
+  const sortedMessages = messages
 
   const handleLoadEarlier = useCallback(async () => {
     if (!hasMore || loading) return
@@ -126,19 +122,10 @@ const ChatBox = () => {
   }, [userId, dispatch, fetchUserMessages])
 
   useEffect(() => {
-    if (connections?.length) {
-      const foundUser = connections.find(
-        (connection) => connection._id === userId
-      )
-      setUser(foundUser)
-    }
-  }, [connections, userId])
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth'
     })
-  }, [sortedMessages])
+  }, [messages])
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -146,7 +133,7 @@ const ChatBox = () => {
       }
     }
   }, [previewUrl])
-  if(!user) return null
+  if (!currentUser) return null
 
   return (
 
@@ -154,11 +141,11 @@ const ChatBox = () => {
 
       <div className='flex items-center gap-2 p-2 md:px-10 xl:pl-42 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-300'>
 
-        <img src={user.profile_picture} alt="" className="size-8 rounded-full"/>
+        <img src={currentUser.profile_picture} alt="" className="size-8 rounded-full"/>
 
         <div>
-          <p className="font-medium">{user.full_name}</p>
-          <p className="text-sm text-gray-500 -mt-1.5">@{user.username}</p>
+          <p className="font-medium">{currentUser.full_name}</p>
+          <p className="text-sm text-gray-500 -mt-1.5">@{currentUser.username}</p>
         </div>
 
       </div>
