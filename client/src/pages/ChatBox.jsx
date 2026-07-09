@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/react'
 import api from '../api/axios'
 import { addMessage, prependMessages, resetMessages, setMessages } from '../features/messages/messagesSlice'
-import { selectSortedMessages, selectConnectionById } from '../features/selectors'
+import { selectSortedMessages, selectConnectionById, selectUser } from '../features/selectors'
 import toast from 'react-hot-toast'
 
 const MessageBubble = memo(({ message, isSentByCurrentUser }) => (
@@ -35,6 +35,7 @@ const ChatBox = () => {
   const { userId } = useParams()
   const messages = useSelector(selectSortedMessages)
   const currentUser = useSelector((state) => selectConnectionById(state, userId))
+  const user = useSelector(selectUser)
   const { getToken } = useAuth()
   const dispatch = useDispatch()
 
@@ -133,7 +134,7 @@ const ChatBox = () => {
       }
     }
   }, [previewUrl])
-  if (!currentUser) return null
+  if (!currentUser || !user) return null
 
   return (
 
@@ -164,13 +165,16 @@ const ChatBox = () => {
             </button>
           )}
 
-          {sortedMessages.map((message) => (
-            <MessageBubble
-              key={message._id || message.createdAt}
-              message={message}
-              isSentByCurrentUser={message.to_user_id === user._id}
-            />
-          ))}
+          {sortedMessages.map((message) => {
+            const senderId = message.from_user_id?._id || message.from_user_id
+            return (
+              <MessageBubble
+                key={message._id || message.createdAt}
+                message={message}
+                isSentByCurrentUser={senderId === user._id}
+              />
+            )
+          })}
 
           <div ref={messagesEndRef}/>
 
